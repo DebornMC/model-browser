@@ -1,0 +1,150 @@
+package deborn.modelviewer;
+
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.render.item.ItemRenderer;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.resource.ResourceManager;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public class ModelViewerScreen extends Screen {
+    private TextFieldWidget searchBox;
+    private final List<ItemStack> modelStacks = new ArrayList<>();
+    private final List<ItemStack> allModelStacks = new ArrayList<>();
+
+    private static final int ITEM_SIZE = 20;
+    private static final int GRID_COLUMNS = 9;
+
+    public ModelViewerScreen() {
+        super(Text.literal("Model Viewer"));
+    }
+
+    @Override
+    protected void init() {
+        MinecraftClient client = this.client;
+        if (client == null) return;
+
+        this.searchBox = new TextFieldWidget(this.textRenderer, this.width / 2 - 80, 20, 160, 20, Text.literal("Search"));
+        this.searchBox.setMaxLength(50);
+        this.addDrawableChild(this.searchBox);
+        this.setInitialFocus(this.searchBox);
+
+        // Listen for search updates
+        this.searchBox.setChangedListener(this::filterItems);
+
+        // Load asynchronously so GUI opens instantly
+        new Thread(() -> loadResourcePackItemModels(client.getResourceManager())).start();
+
+        // Initially empty list until loading completes
+        filterItems("");
+    }
+
+    private void filterItems(String searchText) {
+        String lower = searchText.toLowerCase();
+        synchronized (modelStacks) {
+            modelStacks.clear();
+            for (ItemStack stack : allModelStacks) {
+                Identifier id = stack.get(DataComponentTypes.ITEM_MODEL);
+                if (id != null && id.toString().toLowerCase().contains(lower)) {
+                    modelStacks.add(stack);
+                }
+            }
+        }
+    }
+
+    private void loadResourcePackItemModels(ResourceManager manager) {
+        allModelStacks.clear();
+
+        try {
+            for (String namespace : manager.getAllNamespaces()) {
+                if (namespace.equals("minecraft")) continue;
+
+                Map<Identifier, ?> resources = manager.findResources("items", path -> path.getPath().endsWith(".json"));
+
+                for (Identifier resourceId : resources.keySet()) {
+                    if (!resourceId.getNamespace().equals(namespace)) continue;
+
+                    String path = resourceId.getPath();
+                    if (!path.startsWith("items/") || !path.endsWith(".json")) continue;
+
+                    String itemId = path.substring("items/".length(), path.length() - ".json".length());
+                    Identifier itemIdentifier = Identifier.tryParse(namespace + ":" + itemId);
+                    if (itemIdentifier == null) continue;
+
+                    ItemStack stack = new ItemStack(Items.WHITE_STAINED_GLASS);
+                    stack.set(DataComponentTypes.ITEM_MODEL, itemIdentifier);
+                    allModelStacks.add(stack);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Re-filter once loaded
+        MinecraftClient.getInstance().execute(() -> filterItems(this.searchBox.getText()));
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+
+        this.searchBox.render(context, mouseX, mouseY, delta);
+
+        ItemRenderer renderer = this.client.getItemRenderer();
+        int gridX = this.width / 2 - (GRID_COLUMNS * ITEM_SIZE / 2);
+        int gridY = 50;
+
+        int col = 0;
+        int row = 0;
+        ItemStack hovered = null;
+        int hoveredX = 0, hoveredY = 0;
+
+        synchronized (modelStacks) {
+            for (ItemStack stack : modelStacks) {
+                int x = gridX + col * ITEM_SIZE;
+                int y = gridY + row * ITEM_SIZE;
+
+                context.drawItem(stack, x, y);
+                if (mouseX >= x && mouseX <= x + ITEM_SIZE && mouseY >= y && mouseY <= y + ITEM_SIZE) {
+                    hovered = stack;
+                    hoveredX = x;
+                    hoveredY = y;
+                }
+
+                col++;
+                if (col >= GRID_COLUMNS) {
+                    col = 0;
+                    row++;
+                }
+            }
+        }
+
+        // Tooltip overlay for hovered item
+        if (hovered != null) {
+            Identifier modelId = hovered.get(DataComponentTypes.ITEM_MODEL);
+            if (modelId != null) {
+                // drawItem() renders items at +1,+1 offset and 16x16 pixel size regardless of scale
+                int overlayX = hoveredX;
+                int overlayY = hoveredY;
+                int overlaySize = 16;
+
+                // translucent white overlay (centered exactly on item)
+                context.fill(overlayX, overlayY, overlayX + overlaySize, overlayY + overlaySize, 0x66FFFFFF);
+
+                // tooltip
+                context.drawTooltip(this.textRenderer, Text.literal(modelId.toString()), mouseX, mouseY);
+            }
+        }
+
+
+        super.render(context, mouseX, mouseY, delta);
+    }
+}
