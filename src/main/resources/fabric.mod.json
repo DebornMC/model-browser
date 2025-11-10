@@ -16,16 +16,16 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"deborn.modelviewer.TemplateMod"
+			"deborn.modelbrowser.TemplateMod"
 		],
 		"client": [
-			"deborn.modelviewer.ModelViewerClient"
+			"deborn.modelbrowser.ModelBrowserClient"
 		]
 	},
 	"mixins": [
-		"deborn.modelviewer.mixins.json",
+		"deborn.modelbrowser.mixins.json",
 		{
-			"config": "deborn.modelviewer.client.mixins.json",
+			"config": "deborn.modelbrowser.client.mixins.json",
 			"environment": "client"
 		}
 	],

@@ -1,4 +1,4 @@
-package deborn.modelviewer;
+package deborn.modelbrowser;
 
 import net.fabricmc.api.ModInitializer;
 

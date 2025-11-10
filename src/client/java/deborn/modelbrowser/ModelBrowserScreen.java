@@ -1,4 +1,4 @@
-package deborn.modelviewer;
+package deborn.modelbrowser;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ModelViewerScreen extends Screen {
+public class ModelBrowserScreen extends Screen {
     private TextFieldWidget searchBox;
     private final List<ItemStack> modelStacks = new ArrayList<>();
     private final List<ItemStack> allModelStacks = new ArrayList<>();
@@ -24,8 +24,8 @@ public class ModelViewerScreen extends Screen {
     private static final int ITEM_SIZE = 20;
     private static final int GRID_COLUMNS = 9;
 
-    public ModelViewerScreen() {
-        super(Text.literal("Model Viewer"));
+    public ModelBrowserScreen() {
+        super(Text.literal("Model Browser"));
     }
 
     @Override
@@ -38,13 +38,13 @@ public class ModelViewerScreen extends Screen {
         this.addDrawableChild(this.searchBox);
         this.setInitialFocus(this.searchBox);
 
-        // Listen for search updates
+        
         this.searchBox.setChangedListener(this::filterItems);
 
-        // Load asynchronously so GUI opens instantly
+        
         new Thread(() -> loadResourcePackItemModels(client.getResourceManager())).start();
 
-        // Initially empty list until loading completes
+        
         filterItems("");
     }
 
@@ -89,7 +89,7 @@ public class ModelViewerScreen extends Screen {
             e.printStackTrace();
         }
 
-        // Re-filter once loaded
+        
         MinecraftClient.getInstance().execute(() -> filterItems(this.searchBox.getText()));
     }
 
@@ -127,19 +127,19 @@ public class ModelViewerScreen extends Screen {
             }
         }
 
-        // Tooltip overlay for hovered item
+        
         if (hovered != null) {
             Identifier modelId = hovered.get(DataComponentTypes.ITEM_MODEL);
             if (modelId != null) {
-                // drawItem() renders items at +1,+1 offset and 16x16 pixel size regardless of scale
+                
                 int overlayX = hoveredX;
                 int overlayY = hoveredY;
                 int overlaySize = 16;
 
-                // translucent white overlay (centered exactly on item)
+                
                 context.fill(overlayX, overlayY, overlayX + overlaySize, overlayY + overlaySize, 0x66FFFFFF);
 
-                // tooltip
+                
                 context.drawTooltip(this.textRenderer, Text.literal(modelId.toString()), mouseX, mouseY);
             }
         }
@@ -147,4 +147,5 @@ public class ModelViewerScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
     }
+    
 }

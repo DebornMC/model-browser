@@ -1,6 +1,6 @@
-package deborn.modelviewer.mixin.client;
+package deborn.modelbrowser.mixin.client;
 
-import deborn.modelviewer.ModelViewerScreen;
+import deborn.modelbrowser.ModelBrowserScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
@@ -21,7 +21,7 @@ public abstract class AnvilScreenMixin extends Screen {
      * Injects a custom button into the Anvil GUI after it sets up its widgets.
      */
     @Inject(method = "setup", at = @At("TAIL"))
-    private void addModelViewerButton(CallbackInfo ci) {
+    private void addModelBrowserButton(CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null) return;
 
@@ -30,7 +30,7 @@ public abstract class AnvilScreenMixin extends Screen {
         int buttonY = this.height / 2 - 70;
 
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Models"), button -> {
-            client.setScreen(new ModelViewerScreen());
+            client.setScreen(new ModelBrowserScreen());
         }).dimensions(buttonX, buttonY, 60, 20).build());
     }
 }

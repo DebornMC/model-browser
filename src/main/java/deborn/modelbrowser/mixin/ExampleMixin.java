@@ -1,4 +1,4 @@
-package deborn.modelviewer.mixin;
+package deborn.modelbrowser.mixin;
 
 import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;
