@@ -19,13 +19,20 @@ import java.util.Map;
 public class ModelBrowserScreen extends Screen {
     private TextFieldWidget searchBox;
     private final List<ItemStack> modelStacks = new ArrayList<>();
-    private final List<ItemStack> allModelStacks = new ArrayList<>();
+    public List<ItemStack> allModelStacks = new ArrayList<>();
 
     private static final int ITEM_SIZE = 20;
     private static final int GRID_COLUMNS = 9;
 
+    public static ModelBrowserScreen INSTANCE;
+
     public ModelBrowserScreen() {
         super(Text.literal("Model Browser"));
+        INSTANCE = this;
+    }
+
+    public List<ItemStack> getModelStacks() {
+        return modelStacks;
     }
 
     @Override
@@ -61,7 +68,7 @@ public class ModelBrowserScreen extends Screen {
         }
     }
 
-    private void loadResourcePackItemModels(ResourceManager manager) {
+    public void loadResourcePackItemModels(ResourceManager manager) {
         allModelStacks.clear();
 
         try {
