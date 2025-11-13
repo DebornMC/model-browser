@@ -3,7 +3,8 @@
 	"package": "deborn.modelbrowser.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"AnvilScreenMixin"
+		"AnvilScreenMixin",
+		"HandledScreenAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1
