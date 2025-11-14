@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ModelBrowserScreen extends Screen {
+    public static int scrollOffset = 0;
     private TextFieldWidget searchBox;
     private final List<ItemStack> modelStacks = new ArrayList<>();
     public List<ItemStack> allModelStacks = new ArrayList<>();

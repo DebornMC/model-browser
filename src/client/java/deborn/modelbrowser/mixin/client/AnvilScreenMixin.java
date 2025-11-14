@@ -28,7 +28,14 @@ public abstract class AnvilScreenMixin extends Screen {
     private TextFieldWidget nameField; // Shadow the text input
     private static final Identifier RECIPE_BOOK_TEXTURE = Identifier.ofVanilla("textures/gui/recipe_book.png");
     private static final ButtonTextures RECIPE_BUTTON_TEXTURES = new ButtonTextures(Identifier.ofVanilla("icon/search"));
+    private static final Identifier SLOT_CRAFTABLE_SPRITE = Identifier.ofVanilla("textures/gui/sprites/recipe_book/slot_craftable.png");
     private static final Text SEARCH_HINT_TEXT = Text.translatable("gui.recipebook.search_hint").fillStyle(TextFieldWidget.SEARCH_STYLE);
+
+    private static final int ITEM_SIZE = 25;
+    private static final int GRID_COLUMNS = 5;
+    private static final int MAX_VISIBLE_ROWS = 4;
+    private static final int SHIFT_AMOUNT = 77;
+    
 
     private boolean uiShifted = false;
     private TexturedButtonWidget toggleButton;
@@ -79,7 +86,7 @@ public abstract class AnvilScreenMixin extends Screen {
 
         // only apply shift if the GUI is currently toggled
         if (uiShifted) {
-            modelSearchBox.setX(modelSearchBox.getX() + 77);
+            modelSearchBox.setX(modelSearchBox.getX() + SHIFT_AMOUNT);
         }
 
         modelSearchBox.visible = uiShifted;
@@ -115,11 +122,10 @@ public abstract class AnvilScreenMixin extends Screen {
     private void applyShiftAfterSetup(CallbackInfo ci) {
         if (uiShifted) {
             HandledScreenAccessor accessor = (HandledScreenAccessor) (Object) this;
-            int shiftAmount = 80;
 
-            accessor.setX(accessor.getX() + shiftAmount);
-            toggleButton.setX(toggleButton.getX() + shiftAmount);
-            nameField.setX(nameField.getX() + shiftAmount);
+            accessor.setX(accessor.getX() + SHIFT_AMOUNT);
+            toggleButton.setX(toggleButton.getX() + SHIFT_AMOUNT);
+            nameField.setX(nameField.getX() + SHIFT_AMOUNT);
         }
     }
 
@@ -157,7 +163,7 @@ public abstract class AnvilScreenMixin extends Screen {
         );
 
         // Shift it if needed
-        if (uiShifted) toggleButton.setX(toggleButton.getX() + 80);
+        if (uiShifted) toggleButton.setX(toggleButton.getX() + SHIFT_AMOUNT);
 
         // Add to drawable children every setup
         this.addDrawableChild(toggleButton);
@@ -165,14 +171,13 @@ public abstract class AnvilScreenMixin extends Screen {
 
     private void toggleGuiShift() {
         HandledScreenAccessor accessor = (HandledScreenAccessor) (Object) this;
-        int shiftAmount = 77;
         getPositions();
 
         if (uiShifted) {
             // shifting back
-            accessor.setX(accessor.getX() - shiftAmount);
-            toggleButton.setX(toggleButton.getX() - shiftAmount);
-            nameField.setX(nameField.getX() - shiftAmount);
+            accessor.setX(accessor.getX() - SHIFT_AMOUNT);
+            toggleButton.setX(toggleButton.getX() - SHIFT_AMOUNT);
+            nameField.setX(nameField.getX() - SHIFT_AMOUNT);
 
             modelSearchBox.visible = false;
             modelSearchBox.active = false;
@@ -181,11 +186,11 @@ public abstract class AnvilScreenMixin extends Screen {
             nameField.setFocusUnlocked(false);
         } else {
             // shifting forward
-            accessor.setX(accessor.getX() + shiftAmount);
-            toggleButton.setX(toggleButton.getX() + shiftAmount);
-            nameField.setX(nameField.getX() + shiftAmount);
+            accessor.setX(accessor.getX() + SHIFT_AMOUNT);
+            toggleButton.setX(toggleButton.getX() + SHIFT_AMOUNT);
+            nameField.setX(nameField.getX() + SHIFT_AMOUNT);
 
-            modelSearchBox.setX(baseX + shiftAmount);
+            modelSearchBox.setX(baseX + SHIFT_AMOUNT);
             modelSearchBox.setY(baseY);
             modelSearchBox.visible = true;
             modelSearchBox.active = true;
@@ -229,57 +234,113 @@ public abstract class AnvilScreenMixin extends Screen {
         int guiLeft = (this.width - 176) / 2;
         int guiTop = (this.height - 166) / 2;
 
-        // Define grid position inside the "recipe book" space
-        int gridX = guiLeft - 60;  // adjust as needed
+        // Scroll window area inside recipe book
+        int gridX = guiLeft - 61;
         int gridY = guiTop + 30;
 
-        int ITEM_SIZE = 20;
-        int GRID_COLUMNS = 6;
+        int visibleHeight = MAX_VISIBLE_ROWS * ITEM_SIZE;
 
-        // Grab the model stacks from ModelBrowserScreen
-        ModelBrowserScreen browserScreen = ModelBrowserScreen.INSTANCE; // make INSTANCE public static
-        if (browserScreen == null) return;
+        // static scroll offset
+        if (ModelBrowserScreen.scrollOffset < 0) ModelBrowserScreen.scrollOffset = 0;
 
-        int col = 0;
-        int row = 0;
+        ModelBrowserScreen browser = ModelBrowserScreen.INSTANCE;
+        if (browser == null) return;
+
+        int totalRows;
+        synchronized (browser.getModelStacks()) {
+            totalRows = (int) Math.ceil(browser.getModelStacks().size() / (double)GRID_COLUMNS);
+        }
+
+        // limit scroll
+        int maxScroll = Math.max(0, totalRows - MAX_VISIBLE_ROWS);
+        if (ModelBrowserScreen.scrollOffset > maxScroll) {
+            ModelBrowserScreen.scrollOffset = maxScroll;
+        }
+
+        int yOffset = -ModelBrowserScreen.scrollOffset * ITEM_SIZE;
+
         ItemStack hovered = null;
         int hoveredX = 0, hoveredY = 0;
 
-        synchronized (browserScreen.getModelStacks()) {
-            for (ItemStack stack : browserScreen.getModelStacks()) {
+        // scissor limits drawing to 6 rows
+        context.enableScissor(gridX, gridY, gridX + GRID_COLUMNS * ITEM_SIZE, gridY + visibleHeight);
+
+        int index = 0;
+        synchronized (browser.getModelStacks()) {
+            for (ItemStack stack : browser.getModelStacks()) {
+                int row = index / GRID_COLUMNS;
+                int col = index % GRID_COLUMNS;
+
                 int x = gridX + col * ITEM_SIZE;
-                int y = gridY + row * ITEM_SIZE;
+                int y = gridY + row * ITEM_SIZE + yOffset;
 
-                context.drawItem(stack, x, y);
+                // Only draw inside the clipped scroll region
+                if (y >= gridY - ITEM_SIZE && y <= gridY + visibleHeight) {
+                    context.drawTexture(
+                        RenderPipelines.GUI_TEXTURED,
+                        SLOT_CRAFTABLE_SPRITE,
+                        x, y,
+                        0, 0,
+                        25, 25,
+                        25, 25
+                    );
+                    context.drawItem(stack, x + 4, y + 4);
 
-                if (mouseX >= x && mouseX <= x + ITEM_SIZE && mouseY >= y && mouseY <= y + ITEM_SIZE) {
-                    hovered = stack;
-                    hoveredX = x;
-                    hoveredY = y;
+                    // detect hover
+                    if (mouseX >= x && mouseX <= x + ITEM_SIZE &&
+                        mouseY >= y && mouseY <= y + ITEM_SIZE) {
+                        hovered = stack;
+                        hoveredX = x;
+                        hoveredY = y;
+                    }
                 }
-
-                col++;
-                if (col >= GRID_COLUMNS) {
-                    col = 0;
-                    row++;
-                }
+                index++;
             }
         }
 
-        // Tooltip overlay for hovered item
+        context.disableScissor();
+
+        // Tooltip
         if (hovered != null) {
             Identifier modelId = hovered.get(DataComponentTypes.ITEM_MODEL);
             if (modelId != null) {
-                context.fill(hoveredX, hoveredY, hoveredX + 16, hoveredY + 16, 0x66FFFFFF);
                 context.drawTooltip(this.textRenderer, Text.literal(modelId.toString()), mouseX, mouseY);
             }
         }
     }
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+        if (uiShifted) {
+            // Only scroll when mouse is inside the grid area
+            int gridX = guiLeft - 61;
+            int gridY = guiTop + 30;
 
+            int visibleHeight = MAX_VISIBLE_ROWS * ITEM_SIZE;
+
+            if (mouseX >= gridX && mouseX <= gridX + GRID_COLUMNS * ITEM_SIZE &&
+                mouseY >= gridY && mouseY <= gridY + visibleHeight) {
+
+                int totalRows;
+                ModelBrowserScreen browser = ModelBrowserScreen.INSTANCE;
+                synchronized (browser.getModelStacks()) {
+                    totalRows = (int)Math.ceil(browser.getModelStacks().size() / (double)GRID_COLUMNS);
+                }
+
+                int maxScroll = Math.max(0, totalRows - MAX_VISIBLE_ROWS);
+
+                // scroll direction
+                if (vertical < 0) ModelBrowserScreen.scrollOffset++;
+                if (vertical > 0) ModelBrowserScreen.scrollOffset--;
+
+                // clamp
+                if (ModelBrowserScreen.scrollOffset < 0) ModelBrowserScreen.scrollOffset = 0;
+                if (ModelBrowserScreen.scrollOffset > maxScroll) ModelBrowserScreen.scrollOffset = maxScroll;
+
+                return true; // consume scroll event
+            }
+        }
+
+        return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
+    }
 
 }
-
-
-
-
-
