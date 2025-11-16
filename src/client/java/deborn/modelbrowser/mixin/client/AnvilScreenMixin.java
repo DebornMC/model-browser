@@ -219,21 +219,58 @@ public abstract class AnvilScreenMixin extends Screen {
             cir.setReturnValue(true);
         }
     }
+    private ItemStack getItemAtMouse(int mouseX, int mouseY) {
+        if (!uiShifted || ModelBrowserScreen.INSTANCE == null) return null;
+
+        List<ItemStack> stacks;
+        synchronized (ModelBrowserScreen.INSTANCE.getModelStacks()) {
+            stacks = List.copyOf(ModelBrowserScreen.INSTANCE.getModelStacks());
+        }
+
+        int itemsPerPage = GRID_COLUMNS * MAX_VISIBLE_ROWS;
+        int start = currentPage * itemsPerPage;
+        int end = Math.min(start + itemsPerPage, stacks.size());
+
+        for (int i = start; i < end; i++) {
+            int index = i - start;
+            int row = index / GRID_COLUMNS;
+            int col = index % GRID_COLUMNS;
+
+            int x = guiLeft + GRID_POSITION_X + col * ITEM_SIZE - SHIFT_LEFT_AMOUNT;
+            int y = guiTop + GRID_POSITION_Y + row * ITEM_SIZE;
+
+            if (mouseX >= x && mouseX <= x + ITEM_SIZE &&
+                mouseY >= y && mouseY <= y + ITEM_SIZE) {
+                return stacks.get(i);
+            }
+        }
+
+        return null;
+    }
 
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
         super.mouseClicked(click, doubled);
-        if (uiShifted) {
-            if (this.prevPageButton.mouseClicked(click, doubled)) {
-                currentPage--;
+
+        if (!uiShifted) return false;
+
+        if (prevPageButton.mouseClicked(click, doubled)) { currentPage--; return true; }
+        if (nextPageButton.mouseClicked(click, doubled)) { currentPage++; return true; }
+
+        ItemStack clickedStack = getItemAtMouse((int) click.x(), (int) click.y());
+        if (clickedStack != null) {
+            Identifier modelId = clickedStack.get(DataComponentTypes.ITEM_MODEL);
+            if (modelId != null) {
+                nameField.setText(modelId.toString());
                 return true;
-            } else if (this.nextPageButton.mouseClicked(click, doubled)) {
-                currentPage++;
-                return true; 
             }
         }
+
         return false;
     }
+
+
+
 
     @Inject(method = "drawBackground", at = @At("TAIL"))
     private void drawShiftedRecipeBook(DrawContext ctx, float delta, int mouseX, int mouseY, CallbackInfo ci) {
@@ -269,16 +306,10 @@ public abstract class AnvilScreenMixin extends Screen {
         int start = currentPage * itemsPerPage;
         int end = Math.min(start + itemsPerPage, stacks.size());
 
-        ItemStack hovered = null;
-
         for (int i = start; i < end; i++) {
             int index = i - start;
             int row = index / GRID_COLUMNS;
             int col = index % GRID_COLUMNS;
-
-            int localMouseX = mouseX - guiLeft;
-            int localMouseY = mouseY - guiTop;
-
 
             int x = GRID_POSITION_X + col * ITEM_SIZE - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
             int y = GRID_POSITION_Y + row * ITEM_SIZE;
@@ -288,15 +319,12 @@ public abstract class AnvilScreenMixin extends Screen {
 
             ctx.drawItem(stacks.get(i), x + 4, y + 4);
 
-            if (localMouseX >= x + SHIFT_AMOUNT && localMouseX <= x + SHIFT_AMOUNT + ITEM_SIZE &&
-                    localMouseY >= y && localMouseY <= y + ITEM_SIZE) {
-                hovered = stacks.get(i);
-            }
         }
 
         prevPageButton.visible = currentPage > 0;
         nextPageButton.visible = currentPage < pageCount - 1;
 
+        ItemStack hovered = getItemAtMouse(mouseX, mouseY);
         if (hovered != null) {
             Identifier modelId = hovered.get(DataComponentTypes.ITEM_MODEL);
             if (modelId != null) {
