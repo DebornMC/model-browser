@@ -14,6 +14,7 @@ import net.minecraft.client.gui.widget.ToggleButtonWidget;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
 import net.minecraft.util.Identifier;
@@ -53,11 +54,16 @@ public abstract class AnvilScreenMixin extends Screen {
 
     private static final int GRID_POSITION_X = 11;
     private static final int GRID_POSITION_Y = 32;
+
     private static final int PREV_PAGE_POSITION_X = 38;
     private static final int NEXT_PAGE_POSITION_X = 93;
     private static final int PAGE_BUTTONS_POSITION_Y = 137;
+
     private static final int PAGE_COUNT_POSITION_X = 64;
     private static final int PAGE_COUNT_POSITION_Y = 141;
+
+    private static final int SEARCH_BOX_POSITION_X = 25;
+    private static final int SEARCH_BOX_POSITION_Y = 13;
 
     private String lastSearch;
     private boolean uiShifted = false;
@@ -73,26 +79,13 @@ public abstract class AnvilScreenMixin extends Screen {
     private int guiLeft;
     private int guiTop;
 
-    private int gridX;
-    private int gridY;
-
-    private int searchX;
-    private int searchY;
-
     protected AnvilScreenMixin(Text title) {
         super(title);
     }
 
     private void computePositions() {
-
         guiLeft = (this.width - 176) / 2;
         guiTop = (this.height - 166) / 2;
-
-        searchX = guiLeft - 124;
-        searchY = guiTop + 13;
-
-        gridX = guiLeft - 61;
-        gridY = guiTop + 30;
     }
 
     @Shadow
@@ -103,6 +96,9 @@ public abstract class AnvilScreenMixin extends Screen {
 
         computePositions();
         nameField.setWidth(86);
+
+        int searchX = guiLeft + SEARCH_BOX_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
+        int searchY = guiTop + SEARCH_BOX_POSITION_Y;
 
         modelSearchBox = new TextFieldWidget(textRenderer, searchX, searchY, 109, 14, Text.literal("Search Models"));
         modelSearchBox.setMaxLength(50);
@@ -265,13 +261,19 @@ public abstract class AnvilScreenMixin extends Screen {
                 return true;
             }
         }
-
         return false;
     }
 
-
-
-
+    // @Inject(method = "onSlotUpdate", at = @At("HEAD"), cancellable = true)
+    // private void dontUpdateWhenNameEntered(ScreenHandler handler, int slotId, ItemStack stack, CallbackInfo ci) {
+    //     if (slotId == 0) {
+    //         if (!stack.isEmpty() && !nameField.getText().isEmpty()) {
+    //             this.setFocused(this.nameField);
+    //             ci.cancel();
+    //         }
+    //     }
+    // }
+    
     @Inject(method = "drawBackground", at = @At("TAIL"))
     private void drawShiftedRecipeBook(DrawContext ctx, float delta, int mouseX, int mouseY, CallbackInfo ci) {
         if (!uiShifted)
