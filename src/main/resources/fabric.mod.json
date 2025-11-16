@@ -1,23 +1,16 @@
 {
 	"schemaVersion": 1,
-	"id": "template-mod",
+	"id": "model-browser",
 	"version": "${version}",
-	"name": "Template Mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "Model Browser",
+	"description": "Browse all of your favorite models loaded from your resource packs, directly in game!",
 	"authors": [
-		"Me!"
+		"deborn"
 	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
 	"license": "CC0-1.0",
-	"icon": "assets/template-mod/icon.png",
+	"icon": "assets/model-browser/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
-			"deborn.modelbrowser.TemplateMod"
-		],
 		"client": [
 			"deborn.modelbrowser.ModelBrowserClient"
 		]
@@ -34,8 +27,5 @@
 		"minecraft": "~1.21.10",
 		"java": ">=21",
 		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
 	}
 }

@@ -5,19 +5,24 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.ScreenRect;
+import net.minecraft.client.gui.navigation.NavigationAxis;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
 import net.minecraft.client.gui.screen.ButtonTextures;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.client.gui.widget.ToggleButtonWidget;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.AnvilScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,6 +37,7 @@ import java.util.List;
 public abstract class AnvilScreenMixin extends Screen {
     @Shadow
     private TextFieldWidget nameField;
+
     private static final Identifier RECIPE_BOOK_TEXTURE = Identifier.ofVanilla("textures/gui/recipe_book.png");
     private static final ButtonTextures RECIPE_BUTTON_TEXTURES = new ButtonTextures(
             Identifier.ofVanilla("icon/search"));
@@ -70,23 +76,25 @@ public abstract class AnvilScreenMixin extends Screen {
     private int pageCount;
 
     private TexturedButtonWidget toggleButton;
-    private TextFieldWidget modelSearchBox;
+    private TextFieldWidget searchField;
+    private ScreenRect searchFieldRect;
+    
     private ToggleButtonWidget nextPageButton;
     private ToggleButtonWidget prevPageButton;
 
     private int currentPage = 0;
 
-    private int guiLeft;
-    private int guiTop;
-
     protected AnvilScreenMixin(Text title) {
         super(title);
     }
 
-    private void computePositions() {
-        guiLeft = (this.width - 176) / 2;
-        guiTop = (this.height - 166) / 2;
-    }
+    private int getTop() {
+		return (this.height - 166) / 2;
+	}
+
+	private int getLeft() {
+		return (this.width - 176) / 2;
+	}
 
     @Shadow
     protected abstract void setup();
@@ -94,34 +102,33 @@ public abstract class AnvilScreenMixin extends Screen {
     @Inject(method = "setup", at = @At("TAIL"))
     private void setupUI(CallbackInfo ci) {
 
-        computePositions();
         nameField.setWidth(86);
 
-        int searchX = guiLeft + SEARCH_BOX_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
-        int searchY = guiTop + SEARCH_BOX_POSITION_Y;
+        int searchX = this.getLeft() + SEARCH_BOX_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
+        int searchY = this.getTop() + SEARCH_BOX_POSITION_Y;    
 
-        modelSearchBox = new TextFieldWidget(textRenderer, searchX, searchY, 109, 14, Text.literal("Search Models"));
-        modelSearchBox.setMaxLength(50);
-        modelSearchBox.setChangedListener(this::filterModelStacks);
-        modelSearchBox.setPlaceholder(SEARCH_HINT_TEXT);
-        modelSearchBox.visible = uiShifted;
+        searchField = new TextFieldWidget(textRenderer, searchX, searchY, 109, 14, Text.literal("Search Models"));
+        searchField.setMaxLength(50);
+        searchField.setChangedListener(this::filterModelStacks);
+        searchField.setPlaceholder(SEARCH_HINT_TEXT);
+        searchField.visible = uiShifted;
+        updateSearchRect();
 
-        addDrawableChild(modelSearchBox);
         if (ModelBrowserScreen.INSTANCE != null) {
-            ModelBrowserScreen.INSTANCE.searchBox = modelSearchBox;
+            ModelBrowserScreen.INSTANCE.searchBox = searchField;
         }
         toggleButton = new TexturedButtonWidget(
-                guiLeft + 154,
-                guiTop + 22,
+                this.getLeft() + 154,
+                this.getTop() + 22,
                 12, 12,
                 RECIPE_BUTTON_TEXTURES,
                 b -> toggleGuiShift(),
                 Text.literal("⇄"));
         addDrawableChild(toggleButton);
         
-        int pagePrevX = guiLeft + PREV_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
-        int pageNextX = guiLeft + NEXT_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
-        int pageButtonY = guiTop + PAGE_BUTTONS_POSITION_Y;
+        int pagePrevX = this.getLeft() + PREV_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
+        int pageNextX = this.getLeft() + NEXT_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
+        int pageButtonY = this.getTop() + PAGE_BUTTONS_POSITION_Y;
         
         prevPageButton = new ToggleButtonWidget(pagePrevX, pageButtonY, 12, 17, true);
         prevPageButton.setTextures(PAGE_BACKWARD_TEXTURES);
@@ -150,15 +157,25 @@ public abstract class AnvilScreenMixin extends Screen {
         prevPageButton.setX(prevPageButton.getX() + dx);
         nextPageButton.setX(nextPageButton.getX() + dx);
 
-        modelSearchBox.setX(modelSearchBox.getX() + dx);
+        searchField.setX(searchField.getX() + dx);
+        updateSearchRect();
+    }
+
+    private void updateSearchRect() {
+        searchFieldRect = new ScreenRect(
+            searchField.getX() - 17, 
+            searchField.getY(), 
+            searchField.getWidth() + 17, 
+            searchField.getHeight()
+        );
     }
 
     private void toggleGuiShift() {
         int dir = uiShifted ? -SHIFT_AMOUNT : SHIFT_AMOUNT;
         shiftUI(dir);
 
-        modelSearchBox.visible = !uiShifted;
-        modelSearchBox.active = !uiShifted;
+        searchField.visible = !uiShifted;
+        searchField.active = !uiShifted;
 
         if (uiShifted) {
             nameField.setFocusUnlocked(false);
@@ -194,7 +211,6 @@ public abstract class AnvilScreenMixin extends Screen {
             }
         }
 
-        // Now this only runs when the query actually changes
         currentPage = 0;
     }
 
@@ -210,8 +226,8 @@ public abstract class AnvilScreenMixin extends Screen {
             return;
         }
 
-        if (modelSearchBox.isActive()) {
-            modelSearchBox.keyPressed(input);
+        if (searchField.isActive()) {
+            searchField.keyPressed(input);
             cir.setReturnValue(true);
         }
     }
@@ -232,8 +248,8 @@ public abstract class AnvilScreenMixin extends Screen {
             int row = index / GRID_COLUMNS;
             int col = index % GRID_COLUMNS;
 
-            int x = guiLeft + GRID_POSITION_X + col * ITEM_SIZE - SHIFT_LEFT_AMOUNT;
-            int y = guiTop + GRID_POSITION_Y + row * ITEM_SIZE;
+            int x = this.getLeft() + GRID_POSITION_X + col * ITEM_SIZE - SHIFT_LEFT_AMOUNT;
+            int y = this.getTop() + GRID_POSITION_Y + row * ITEM_SIZE;
 
             if (mouseX >= x && mouseX <= x + ITEM_SIZE &&
                 mouseY >= y && mouseY <= y + ITEM_SIZE) {
@@ -253,13 +269,29 @@ public abstract class AnvilScreenMixin extends Screen {
         if (prevPageButton.mouseClicked(click, doubled)) { currentPage--; return true; }
         if (nextPageButton.mouseClicked(click, doubled)) { currentPage++; return true; }
 
+        HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
+        ScreenHandler handler = acc.getHandler();
+
         ItemStack clickedStack = getItemAtMouse((int) click.x(), (int) click.y());
         if (clickedStack != null) {
             Identifier modelId = clickedStack.get(DataComponentTypes.ITEM_MODEL);
             if (modelId != null) {
-                nameField.setText(modelId.toString());
+                ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
+                if (handler.getSlot(0).hasStack()) {
+                    nameField.setText("");  
+                    nameField.setText(modelId.toString());
+                    return true;
+                }
+            }
+        }		
+        if (this.searchField != null) {
+            boolean bl = this.searchFieldRect != null && this.searchFieldRect.contains((int) click.x(), (int) click.y());
+            if (bl) {
+                this.setFocused(searchField);
+                this.searchField.setFocused(true);
                 return true;
             }
+            this.searchField.setFocused(false);
         }
         return false;
     }
@@ -279,8 +311,8 @@ public abstract class AnvilScreenMixin extends Screen {
         if (!uiShifted)
             return;
 
-        int x = guiLeft - SHIFT_LEFT_AMOUNT;
-        int y = guiTop;
+        int x = this.getLeft() - SHIFT_LEFT_AMOUNT;
+        int y = this.getTop();
 
         ctx.drawTexture(RenderPipelines.GUI_TEXTURED, RECIPE_BOOK_TEXTURE, x, y,
                 1.0F, 1.0F, 147, 166, 256, 256);
@@ -340,10 +372,11 @@ public abstract class AnvilScreenMixin extends Screen {
         if (uiShifted) {
             prevPageButton.render(ctx, mouseX, mouseY, deltaTicks);
             nextPageButton.render(ctx, mouseX, mouseY, deltaTicks);
+            searchField.render(ctx, mouseX, mouseY, deltaTicks);
             if (this.pageCount > 1) {
                 Text text = Text.translatable("gui.recipebook.page", new Object[]{this.currentPage + 1, this.pageCount});
-                int x = guiLeft + PAGE_COUNT_POSITION_X - SHIFT_LEFT_AMOUNT;
-                int y = guiTop + PAGE_COUNT_POSITION_Y;
+                int x = this.getLeft() + PAGE_COUNT_POSITION_X - SHIFT_LEFT_AMOUNT;
+                int y = this.getTop() + PAGE_COUNT_POSITION_Y;
                 ctx.drawTextWithShadow(this.client.textRenderer, text, x, y, Colors.WHITE);
             }
         }
