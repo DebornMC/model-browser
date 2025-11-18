@@ -16,12 +16,12 @@ public class ModelBrowserClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ModelBrowserScreen.INSTANCE = new ModelBrowserScreen(); // ensure it exists
+        ModelBrowserScreen.INSTANCE = new ModelBrowserScreen();
         ModelBrowserReloadListener.register();
         openModelBrowserKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.deborn.modelbrowser.example", 
+                "key.deborn.modelbrowser.open_menu", 
                 InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_O,              
+                InputUtil.UNKNOWN_KEY.getCode(),            
                 CATEGORY    
         ));
 
