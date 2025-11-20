@@ -45,10 +45,8 @@ public class ModelBrowserScreen extends Screen {
         this.searchBox.setMaxLength(50);
         this.addDrawableChild(this.searchBox);
         this.setInitialFocus(this.searchBox);
-
         
         this.searchBox.setChangedListener(this::filterItems);
-
         
         new Thread(() -> loadResourcePackItemModels(client.getResourceManager())).start();
 
@@ -96,8 +94,6 @@ public class ModelBrowserScreen extends Screen {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        
         MinecraftClient.getInstance().execute(() -> filterItems(this.searchBox.getText()));
     }
 

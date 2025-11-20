@@ -10,12 +10,8 @@ public class ModelBrowserReloadListener implements SynchronousResourceReloader {
 
     @Override
     public void reload(ResourceManager manager) {
-        if (ModelBrowserScreen.INSTANCE == null) {
-            ModelBrowserScreen.INSTANCE = new ModelBrowserScreen();
-        }
-
-        // Synchronous reload
         ModelBrowserScreen.INSTANCE.loadResourcePackItemModels(manager);
+        ModelListLoader.loadAsync();
     }
 
     public static void register() {
