@@ -1,4 +1,4 @@
 {
-  "key.category.deborn.modelbrowser.keybindings": "Model Browser",
-  "key.deborn.modelbrowser.open_menu": "Open Model Browser"
+  "key.deborn.modelbrowser.open_menu": "Open Model Browser",
+  "key.deborn.modelbrowser.no_models_loaded": "No models loaded!"
 }

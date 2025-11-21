@@ -105,7 +105,7 @@ public abstract class AnvilScreenMixin extends Screen {
         int searchX = this.getLeft() + SEARCH_BOX_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
         int searchY = this.getTop() + SEARCH_BOX_POSITION_Y;    
 
-        searchField = new TextFieldWidget(textRenderer, searchX, searchY, 109, 14, Text.literal("Search Models"));
+        searchField = new TextFieldWidget(textRenderer, searchX, searchY, 109, 14, Text.translatable("itemGroup.search"));
         searchField.setMaxLength(50);
         searchField.setChangedListener(this::filterModelStacks);
         searchField.setPlaceholder(SEARCH_HINT_TEXT);
@@ -119,7 +119,7 @@ public abstract class AnvilScreenMixin extends Screen {
                 12, 12,
                 RECIPE_BUTTON_TEXTURES,
                 b -> toggleGuiShift(),
-                Text.literal("⇄"));
+                Text.translatable("key.deborn.modelbrowser.open_menu"));
         addDrawableChild(toggleButton);
         
         int pagePrevX = this.getLeft() + PREV_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;

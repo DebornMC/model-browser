@@ -11,6 +11,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Rarity;
 import net.minecraft.util.Unit;
 
 public class ModelCreativeTab {
@@ -31,9 +32,10 @@ public class ModelCreativeTab {
                                 entries.addAll(stacks);
                             else {
                                 ItemStack placeholder = new ItemStack(Items.BARRIER);
-                                placeholder.set(DataComponentTypes.ITEM_NAME, Text.literal("No models loaded!"));
+                                placeholder.set(DataComponentTypes.ITEM_NAME, Text.translatable("key.deborn.modelbrowser.no_models_loaded"));
                                 placeholder.set(DataComponentTypes.CREATIVE_SLOT_LOCK, Unit.INSTANCE);
-                                entries.add(placeholder);
+                                placeholder.set(DataComponentTypes.RARITY, Rarity.COMMON);
+                                entries.add(placeholder, ItemGroup.StackVisibility.PARENT_TAB_ONLY);
                             }
                         })
                         .build()                
