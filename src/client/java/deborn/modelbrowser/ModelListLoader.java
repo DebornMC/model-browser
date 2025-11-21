@@ -48,7 +48,6 @@ public class ModelListLoader {
                     EquippableComponent equippable = EquippableComponent.builder(EquipmentSlot.HEAD)
                             .build();
 
-                    // Set it on the stack
                     stack.set(DataComponentTypes.EQUIPPABLE, equippable);
                     stacks.add(stack);
                 }
