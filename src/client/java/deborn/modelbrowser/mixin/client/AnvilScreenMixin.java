@@ -1,6 +1,5 @@
 package deborn.modelbrowser.mixin.client;
 
-import deborn.modelbrowser.ModelBrowserScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.Click;
@@ -27,6 +26,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import deborn.modelbrowser.ModelListData;
 
 import java.util.List;
 
@@ -111,9 +112,7 @@ public abstract class AnvilScreenMixin extends Screen {
         searchField.visible = uiShifted;
         updateSearchRect();
 
-        if (ModelBrowserScreen.INSTANCE != null) {
-            ModelBrowserScreen.INSTANCE.searchBox = searchField;
-        }
+
         toggleButton = new TexturedButtonWidget(
                 this.getLeft() + 154,
                 this.getTop() + 22,
@@ -186,28 +185,10 @@ public abstract class AnvilScreenMixin extends Screen {
     }
 
     private void filterModelStacks(String text) {
-        if (ModelBrowserScreen.INSTANCE == null)
-            return;
-
-        // If the text did not change, do NOT reset the page
-        if (text.equals(lastSearch)) {
-            return;
-        }
+        if (text.equals(lastSearch)) return;
         lastSearch = text;
 
-        String lower = text.toLowerCase();
-
-        synchronized (ModelBrowserScreen.INSTANCE.getModelStacks()) {
-            ModelBrowserScreen.INSTANCE.getModelStacks().clear();
-
-            for (ItemStack stack : ModelBrowserScreen.INSTANCE.allModelStacks) {
-                Identifier id = stack.get(DataComponentTypes.ITEM_MODEL);
-                if (id != null && id.toString().toLowerCase().contains(lower)) {
-                    ModelBrowserScreen.INSTANCE.getModelStacks().add(stack);
-                }
-            }
-        }
-
+        ModelListData.filter(text);
         currentPage = 0;
     }
 
@@ -229,12 +210,9 @@ public abstract class AnvilScreenMixin extends Screen {
         }
     }
     private ItemStack getItemAtMouse(int mouseX, int mouseY) {
-        if (!uiShifted || ModelBrowserScreen.INSTANCE == null) return null;
+        if (!uiShifted) return null;
 
-        List<ItemStack> stacks;
-        synchronized (ModelBrowserScreen.INSTANCE.getModelStacks()) {
-            stacks = List.copyOf(ModelBrowserScreen.INSTANCE.getModelStacks());
-        }
+        List<ItemStack> stacks = ModelListData.getFiltered();
 
         int itemsPerPage = GRID_COLUMNS * MAX_VISIBLE_ROWS;
         int start = currentPage * itemsPerPage;
@@ -320,14 +298,7 @@ public abstract class AnvilScreenMixin extends Screen {
         if (!uiShifted)
             return;
 
-        ModelBrowserScreen browser = ModelBrowserScreen.INSTANCE;
-        if (browser == null)
-            return;
-
-        List<ItemStack> stacks;
-        synchronized (browser.getModelStacks()) {
-            stacks = List.copyOf(browser.getModelStacks());
-        }
+        List<ItemStack> stacks = ModelListData.getFiltered();
 
         int itemsPerPage = GRID_COLUMNS * MAX_VISIBLE_ROWS;
         pageCount = (int) Math.ceil(stacks.size() / (double) itemsPerPage);

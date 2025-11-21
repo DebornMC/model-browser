@@ -10,7 +10,6 @@ public class ModelBrowserReloadListener implements SynchronousResourceReloader {
 
     @Override
     public void reload(ResourceManager manager) {
-        ModelBrowserScreen.INSTANCE.loadResourcePackItemModels(manager);
         ModelListLoader.loadAsync();
         System.out.println("[ModelBrowser] Reloaded");
         CreativeScreenManager.markRefreshPending();

@@ -10,7 +10,6 @@ public class ModelBrowserClient implements ClientModInitializer {
     public static FeatureSet enabledFeatures = FeatureFlags.FEATURE_MANAGER.getFeatureSet();
     @Override
     public void onInitializeClient() {
-        ModelBrowserScreen.INSTANCE = new ModelBrowserScreen();
         ModelBrowserReloadListener.register();
         ModelCreativeTab.registerTab();
         ModelListLoader.loadAsync();
