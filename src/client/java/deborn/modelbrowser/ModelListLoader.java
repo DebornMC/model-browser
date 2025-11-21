@@ -2,9 +2,14 @@ package deborn.modelbrowser;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.EquippableComponent;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
 import net.minecraft.resource.ResourceManager;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
@@ -37,8 +42,14 @@ public class ModelListLoader {
                     Identifier itemIdentifier = Identifier.tryParse(namespace + ":" + itemId);
                     if (itemIdentifier == null) continue;
 
-                    ItemStack stack = new ItemStack(Items.WHITE_STAINED_GLASS);
+                    ItemStack stack = new ItemStack(Items.IRON_NUGGET);
                     stack.set(DataComponentTypes.ITEM_MODEL, itemIdentifier);
+                    stack.set(DataComponentTypes.ITEM_NAME, Text.literal(itemIdentifier.toString()));
+                    EquippableComponent equippable = EquippableComponent.builder(EquipmentSlot.HEAD)
+                            .build();
+
+                    // Set it on the stack
+                    stack.set(DataComponentTypes.EQUIPPABLE, equippable);
                     stacks.add(stack);
                 }
             }

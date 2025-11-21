@@ -1,7 +1,7 @@
 package deborn.modelbrowser;
 
-import net.minecraft.util.Unit;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -9,9 +9,9 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
-import net.minecraft.component.DataComponentTypes;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Unit;
 
 public class ModelCreativeTab {
     
@@ -26,12 +26,17 @@ public class ModelCreativeTab {
                         .displayName(Text.literal("Model Browser"))
                         .icon(() -> new ItemStack(Items.BRUSH))
                         .entries((enabled, entries) -> {
-                            ItemStack placeholder = new ItemStack(Items.BARRIER);
-                            placeholder.set(DataComponentTypes.ITEM_NAME, Text.literal("No Models Loaded"));
-                            placeholder.set(DataComponentTypes.CREATIVE_SLOT_LOCK, Unit.INSTANCE);
-                            entries.add(placeholder);
+                            var stacks = ModelListData.getStacks();
+                            if (!stacks.isEmpty())
+                                entries.addAll(stacks);
+                            else {
+                                ItemStack placeholder = new ItemStack(Items.BARRIER);
+                                placeholder.set(DataComponentTypes.ITEM_NAME, Text.literal("No models loaded!"));
+                                placeholder.set(DataComponentTypes.CREATIVE_SLOT_LOCK, Unit.INSTANCE);
+                                entries.add(placeholder);
+                            }
                         })
-                        .build()
+                        .build()                
         );
     }
 }
