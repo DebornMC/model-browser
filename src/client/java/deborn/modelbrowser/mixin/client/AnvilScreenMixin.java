@@ -271,15 +271,6 @@ public abstract class AnvilScreenMixin extends Screen {
         return false;
     }
 
-    // @Inject(method = "onSlotUpdate", at = @At("HEAD"), cancellable = true)
-    // private void dontUpdateWhenNameEntered(ScreenHandler handler, int slotId, ItemStack stack, CallbackInfo ci) {
-    //     if (slotId == 0) {
-    //         if (!stack.isEmpty() && !nameField.getText().isEmpty()) {
-    //             this.setFocused(this.nameField);
-    //             ci.cancel();
-    //         }
-    //     }
-    // }
     
     @Inject(method = "drawBackground", at = @At("TAIL"))
     private void drawShiftedRecipeBook(DrawContext ctx, float delta, int mouseX, int mouseY, CallbackInfo ci) {

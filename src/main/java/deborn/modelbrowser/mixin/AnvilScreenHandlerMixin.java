@@ -7,6 +7,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+
+import com.llamalad7.mixinextras.expression.Definition;
+import com.llamalad7.mixinextras.expression.Expression;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.EquippableComponent;
@@ -77,9 +85,12 @@ public abstract class AnvilScreenHandlerMixin {
         } else {
             out.remove(DataComponentTypes.CUSTOM_NAME);
         }
+
         // make equippable
         EquippableComponent equippable = EquippableComponent.builder(EquipmentSlot.HEAD).build();
-        out.set(DataComponentTypes.EQUIPPABLE, equippable);
+        if (out.get(DataComponentTypes.EQUIPPABLE) == null)
+            out.set(DataComponentTypes.EQUIPPABLE, equippable);
+
         // remove glint
         out.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, false);
         output.setStack(out.copy());
