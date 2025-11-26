@@ -1,0 +1,19 @@
+name: Publish Mod
+
+on:
+  release:
+    types: [published] 
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Publish to Modrinth
+        uses: Kira-NT/mc-publish@v3.3.0
+        with:
+          modrinth-id: QgDZY2Yg
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
