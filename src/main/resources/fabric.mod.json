@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "model-browser",
+	"id": "modelbrowser",
 	"version": "${version}",
 	"name": "Model Browser",
 	"description": "Browse all of your favorite models loaded from your resource packs, directly in-game!",
@@ -8,7 +8,7 @@
 		"deborn"
 	],
 	"license": "ARR",
-	"icon": "assets/model-browser/icon.png",
+	"icon": "assets/modelbrowser/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"client": [

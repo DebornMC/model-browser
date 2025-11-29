@@ -9,7 +9,7 @@ import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import net.minecraft.util.ActionResult;
 
 
-@Config(name = "model-browser")
+@Config(name = "modelbrowser")
 public class ModConfig implements ConfigData
 {
 	@ConfigEntry.Gui.Excluded

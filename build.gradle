@@ -19,7 +19,7 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"model-browser" {
+		"modelbrowser" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}

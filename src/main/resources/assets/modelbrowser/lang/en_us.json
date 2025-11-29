@@ -2,6 +2,7 @@
   "modelbrowser.open_menu": "Open Model Browser",
   "modelbrowser.no_models_loaded": "No models loaded!",
 
+  "text.autoconfig.model-browser.title": "Model Browser Options",
   "text.autoconfig.model-browser.option.showCreativeInventoryTab": "Show Creative Inventory Tab",
   "text.autoconfig.model-browser.option.showCreativeInventoryTab.@Tooltip": "Displays a tab with every loaded model in the creative inventory",
   "text.autoconfig.model-browser.option.showAnvilScreenTab": "Show Anvil Screen Tab",
