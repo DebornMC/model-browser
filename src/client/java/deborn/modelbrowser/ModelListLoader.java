@@ -80,7 +80,7 @@ public class ModelListLoader {
                     stacks.add(stack);
                 }
             }
-                ModelBrowser.LOGGER.info("Loaded " + stacks.size() + " Models!");
+                ModelBrowser.LOGGER.info("Loaded " + stacks.size() + " models");
                 MinecraftClient.getInstance().execute(() -> {
                     ModelListData.setStacks(stacks);
                 });
