@@ -11,7 +11,17 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.minecraft.resource.Resource;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +40,23 @@ public class ModelListLoader {
             for (String namespace : manager.getAllNamespaces()) {
                 if (namespace.equals("minecraft")) continue;
 
-                Map<Identifier, ?> resources = manager.findResources("items", path -> path.getPath().endsWith(".json"));
+                Map<Identifier, Resource> resources = manager.findResources("items", path -> path.getPath().endsWith(".json"));
 
                 for (Identifier resourceId : resources.keySet()) {
                     if (!resourceId.getNamespace().equals(namespace)) continue;
+                    Resource resource = resources.get(resourceId);
+
+                    JsonElement element;
+                    try (BufferedReader reader = resource.getReader()) {
+                        element = JsonParser.parseReader(reader);
+                    }
+
+                    if (!element.isJsonObject()) continue;
+                    JsonObject obj = element.getAsJsonObject();
+
+                    if (obj.has("unlisted") && obj.get("unlisted").getAsBoolean()) {
+                        continue;
+                    }
 
                     String path = resourceId.getPath();
                     if (!path.startsWith("items/") || !path.endsWith(".json")) continue;

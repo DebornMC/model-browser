@@ -2,9 +2,9 @@
   "modelbrowser.open_menu": "Open Model Browser",
   "modelbrowser.no_models_loaded": "No models loaded!",
 
-  "text.autoconfig.model-browser.title": "Model Browser Options",
-  "text.autoconfig.model-browser.option.showCreativeInventoryTab": "Show Creative Inventory Tab",
-  "text.autoconfig.model-browser.option.showCreativeInventoryTab.@Tooltip": "Displays a tab with every loaded model in the creative inventory",
-  "text.autoconfig.model-browser.option.showAnvilScreenTab": "Show Anvil Screen Tab",
-  "text.autoconfig.model-browser.option.showAnvilScreenTab.@Tooltip": "Adds a button that lets you set any loaded model in the anvil"
+  "text.autoconfig.modelbrowser.title": "Model Browser Options",
+  "text.autoconfig.modelbrowser.option.showCreativeInventoryTab": "Show Creative Inventory Tab",
+  "text.autoconfig.modelbrowser.option.showCreativeInventoryTab.@Tooltip": "Displays a tab with every loaded model in the creative inventory",
+  "text.autoconfig.modelbrowser.option.showAnvilScreenTab": "Show Anvil Screen Tab",
+  "text.autoconfig.modelbrowser.option.showAnvilScreenTab.@Tooltip": "Adds a button that lets you set any loaded model in the anvil"
 }
