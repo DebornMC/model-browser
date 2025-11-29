@@ -4,7 +4,8 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"AnvilScreenMixin",
-		"HandledScreenAccessor"
+		"HandledScreenAccessor",
+		"CreativeInventoryScreenAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

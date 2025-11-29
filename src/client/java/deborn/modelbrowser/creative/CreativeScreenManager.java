@@ -3,6 +3,8 @@ package deborn.modelbrowser.creative;
 import deborn.modelbrowser.ModelBrowser;
 import deborn.modelbrowser.ModelBrowserClient;
 import deborn.modelbrowser.config.ModConfig;
+import deborn.modelbrowser.mixin.CreativeInventoryScreenAccessor;
+import deborn.modelbrowser.mixin.HandledScreenAccessor;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
@@ -22,22 +24,24 @@ public class CreativeScreenManager {
         if (!refreshPending) return;
 
         refreshPending = false;
-        refreshCreativeInventoryScreen();
+        refreshCreativeInventoryScreen(screen);
         if (!ModConfig.INSTANCE.showCreativeInventoryTab) {
             System.out.println(screen.getCurrentPage());
             screen.switchToPage(0);
+            
         }
         
     }
 
-    public static void refreshCreativeInventoryScreen() {
+    public static void refreshCreativeInventoryScreen(CreativeInventoryScreen screen) {
         System.out.println("refreshCreativeInventoryScreen() called");
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
         if (player == null) return;
         
         client.setScreen(null);
-        CreativeInventoryScreen screen = new CreativeInventoryScreen(player, ModelBrowserClient.enabledFeatures, true);
+        boolean operatorTabEnabled = ((CreativeInventoryScreenAccessor) screen).hasOperatorTabs();
+        screen = new CreativeInventoryScreen(player, ModelBrowserClient.enabledFeatures, operatorTabEnabled);
         client.setScreen(screen);
     }
 }
