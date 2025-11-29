@@ -1,11 +1,8 @@
 package deborn.modelbrowser.creative;
 
-import deborn.modelbrowser.ModelBrowser;
 import deborn.modelbrowser.ModelBrowserClient;
 import deborn.modelbrowser.config.ModConfig;
 import deborn.modelbrowser.mixin.CreativeInventoryScreenAccessor;
-import deborn.modelbrowser.mixin.HandledScreenAccessor;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
