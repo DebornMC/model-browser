@@ -1,4 +1,4 @@
-package deborn.modelbrowser.mixin.client;
+package deborn.modelbrowser.mixin;
 
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.screen.ScreenHandler;

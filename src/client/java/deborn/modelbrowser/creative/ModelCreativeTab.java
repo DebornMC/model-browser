@@ -1,5 +1,8 @@
-package deborn.modelbrowser;
+package deborn.modelbrowser.creative;
 
+import deborn.modelbrowser.ModelBrowser;
+import deborn.modelbrowser.ModelListData;
+import deborn.modelbrowser.config.ModConfig;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemGroup;
@@ -19,7 +22,7 @@ public class ModelCreativeTab {
     public static final Identifier TAB = Identifier.tryParse(ModelBrowser.MOD_ID);
     public static final RegistryKey<ItemGroup> TAB_KEY = RegistryKey.of(RegistryKeys.ITEM_GROUP, TAB);
 
-    public static void registerTab() {
+    public static void register() {
         Registry.register(
                 Registries.ITEM_GROUP,
                 TAB,
@@ -27,18 +30,20 @@ public class ModelCreativeTab {
                         .displayName(Text.literal("Model Browser"))
                         .icon(() -> new ItemStack(Items.BRUSH))
                         .entries((enabled, entries) -> {
-                            var stacks = ModelListData.getStacks();
-                            if (!stacks.isEmpty())
-                                entries.addAll(stacks);
-                            else {
-                                ItemStack placeholder = new ItemStack(Items.BARRIER);
-                                placeholder.set(DataComponentTypes.ITEM_NAME, Text.translatable("key.deborn.modelbrowser.no_models_loaded"));
-                                placeholder.set(DataComponentTypes.CREATIVE_SLOT_LOCK, Unit.INSTANCE);
-                                placeholder.set(DataComponentTypes.RARITY, Rarity.COMMON);
-                                entries.add(placeholder, ItemGroup.StackVisibility.PARENT_TAB_ONLY);
+                            if (ModConfig.INSTANCE.showCreativeInventoryTab) {
+                                var stacks = ModelListData.getStacks();
+                                if (!stacks.isEmpty())
+                                    entries.addAll(stacks);
+                                else {
+                                    ItemStack placeholder = new ItemStack(Items.BARRIER);
+                                    placeholder.set(DataComponentTypes.ITEM_NAME, Text.translatable("modelbrowser.no_models_loaded"));
+                                    placeholder.set(DataComponentTypes.CREATIVE_SLOT_LOCK, Unit.INSTANCE);
+                                    placeholder.set(DataComponentTypes.RARITY, Rarity.COMMON);
+                                    entries.add(placeholder, ItemGroup.StackVisibility.PARENT_TAB_ONLY);
+                                }
                             }
                         })
-                        .build()                
+                        .build()
         );
     }
 }

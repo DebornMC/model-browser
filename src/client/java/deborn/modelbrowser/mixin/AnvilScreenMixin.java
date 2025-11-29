@@ -1,4 +1,4 @@
-package deborn.modelbrowser.mixin.client;
+package deborn.modelbrowser.mixin;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
@@ -28,6 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import deborn.modelbrowser.ModelListData;
+import deborn.modelbrowser.config.ModConfig;
 
 import java.util.List;
 
@@ -99,7 +100,8 @@ public abstract class AnvilScreenMixin extends Screen {
 
     @Inject(method = "setup", at = @At("TAIL"))
     private void setupUI(CallbackInfo ci) {
-
+        if (!ModConfig.INSTANCE.showAnvilScreenTab) return;
+        
         nameField.setWidth(86);
 
         int searchX = this.getLeft() + SEARCH_BOX_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
@@ -119,7 +121,7 @@ public abstract class AnvilScreenMixin extends Screen {
                 12, 12,
                 RECIPE_BUTTON_TEXTURES,
                 b -> toggleGuiShift(),
-                Text.translatable("key.deborn.modelbrowser.open_menu"));
+                Text.translatable("modelbrowser.open_menu"));
         addDrawableChild(toggleButton);
         
         int pagePrevX = this.getLeft() + PREV_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
@@ -194,7 +196,7 @@ public abstract class AnvilScreenMixin extends Screen {
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void interceptKeys(KeyInput input, CallbackInfoReturnable<Boolean> cir) {
-
+        if (!uiShifted) return;
         if (input.isEscape()) {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client != null && client.player != null) {

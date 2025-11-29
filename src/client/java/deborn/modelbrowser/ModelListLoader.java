@@ -3,12 +3,12 @@ package deborn.modelbrowser;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.EquippableComponent;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.resource.ResourceManager;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -45,19 +45,25 @@ public class ModelListLoader {
                     ItemStack stack = new ItemStack(Items.IRON_NUGGET);
                     stack.set(DataComponentTypes.ITEM_MODEL, itemIdentifier);
                     stack.set(DataComponentTypes.ITEM_NAME, Text.literal(itemIdentifier.toString()));
-                    EquippableComponent equippable = EquippableComponent.builder(EquipmentSlot.HEAD)
-                            .build();
-
+                    
+                    EquippableComponent equippable = EquippableComponent.builder(EquipmentSlot.HEAD).build();
                     stack.set(DataComponentTypes.EQUIPPABLE, equippable);
+
+                    NbtCompound compound = new NbtCompound();
+                    compound.putBoolean("model_browser_data", true);
+                    NbtComponent customData = NbtComponent.of(compound);
+                    stack.set(DataComponentTypes.CUSTOM_DATA, customData);
+
                     stacks.add(stack);
                 }
             }
+                ModelBrowser.LOGGER.info("Loaded " + stacks.size() + " Models!");
+                MinecraftClient.getInstance().execute(() -> {
+                    ModelListData.setStacks(stacks);
+                });
         } catch (Exception e) {
+            ModelBrowser.LOGGER.error("Failed to load models!");
             e.printStackTrace();
         }
-        System.out.println("[ModelBrowser] Loaded " + stacks.size() + " Models");
-        MinecraftClient.getInstance().execute(() -> {
-            ModelListData.setStacks(stacks);
-        });
     }
 }

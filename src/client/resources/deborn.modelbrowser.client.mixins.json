@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "deborn.modelbrowser.mixin.client",
+	"package": "deborn.modelbrowser.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"AnvilScreenMixin",

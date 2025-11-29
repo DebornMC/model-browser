@@ -91,7 +91,7 @@ public abstract class AnvilScreenHandlerMixin {
 
         out.set(DataComponentTypes.ITEM_MODEL, id);
 
-        // Restore previous custom_name if there was one
+        // Restore previous custom_name if there was one, otherwise remove it
         if (this.savedCustomName != null) {
             out.set(DataComponentTypes.CUSTOM_NAME, this.savedCustomName);
         } else {
@@ -139,6 +139,7 @@ public abstract class AnvilScreenHandlerMixin {
                     itemStack2.get().set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(tag));
                 }
                 itemStack2.get().set(DataComponentTypes.ITEM_MODEL, itemStack2.get().getItem().getDefaultStack().get(DataComponentTypes.ITEM_MODEL));
+                itemStack2.get().set(DataComponentTypes.ITEM_NAME, itemStack2.get().getItem().getDefaultStack().get(DataComponentTypes.ITEM_NAME));
                 itemStack2.get().set(DataComponentTypes.EQUIPPABLE, itemStack2.get().getItem().getDefaultStack().get(DataComponentTypes.EQUIPPABLE));
                 itemStack2.get().remove(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE);
             }
