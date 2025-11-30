@@ -13,7 +13,6 @@ public class CreativeScreenManager {
 
     public static void markRefreshPending() {
         refreshPending = true;
-        System.out.println("markRefreshPending() called");
 
     }
 
@@ -23,7 +22,6 @@ public class CreativeScreenManager {
         refreshPending = false;
         refreshCreativeInventoryScreen(screen);
         if (!ModConfig.INSTANCE.showCreativeInventoryTab) {
-            System.out.println(screen.getCurrentPage());
             screen.switchToPage(0);
             
         }
@@ -31,7 +29,6 @@ public class CreativeScreenManager {
     }
 
     public static void refreshCreativeInventoryScreen(CreativeInventoryScreen screen) {
-        System.out.println("refreshCreativeInventoryScreen() called");
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
         if (player == null) return;
