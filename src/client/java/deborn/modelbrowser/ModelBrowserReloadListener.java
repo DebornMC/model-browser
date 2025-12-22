@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.resource.SynchronousResourceReloader;
 import net.minecraft.util.Identifier;
+import java.util.Objects;
 
 public class ModelBrowserReloadListener implements SynchronousResourceReloader {
     public static final Identifier ID = Identifier.of("modelbrowser", "model_reload");
@@ -21,9 +22,8 @@ public class ModelBrowserReloadListener implements SynchronousResourceReloader {
             CreativeScreenManager.markRefreshPending();
         }
     }
-
     public static void register() {
-        ResourceLoader.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES).registerReloader(ID, new ModelBrowserReloadListener());
+        ResourceLoader.get(net.minecraft.resource.ResourceType.CLIENT_RESOURCES).registerReloader(Objects.requireNonNull(ID), new ModelBrowserReloadListener());
     }
 }
 

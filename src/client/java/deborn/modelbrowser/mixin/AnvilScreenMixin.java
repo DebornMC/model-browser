@@ -11,7 +11,6 @@ import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.client.gui.widget.ToggleButtonWidget;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
@@ -78,8 +77,8 @@ public abstract class AnvilScreenMixin extends Screen {
     private TextFieldWidget searchField;
     private ScreenRect searchFieldRect;
     
-    private ToggleButtonWidget nextPageButton;
-    private ToggleButtonWidget prevPageButton;
+    private TexturedButtonWidget nextPageButton;
+    private TexturedButtonWidget prevPageButton;
 
     private int currentPage = 0;
 
@@ -127,11 +126,30 @@ public abstract class AnvilScreenMixin extends Screen {
         int pagePrevX = this.getLeft() + PREV_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
         int pageNextX = this.getLeft() + NEXT_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
         int pageButtonY = this.getTop() + PAGE_BUTTONS_POSITION_Y;
-        
-        prevPageButton = new ToggleButtonWidget(pagePrevX, pageButtonY, 12, 17, true);
-        prevPageButton.setTextures(PAGE_BACKWARD_TEXTURES);
-        nextPageButton = new ToggleButtonWidget(pageNextX, pageButtonY, 12, 17, false);
-        nextPageButton.setTextures(PAGE_FORWARD_TEXTURES);
+
+        prevPageButton = new TexturedButtonWidget(
+            pagePrevX,
+            pageButtonY,
+            12,
+            17,
+            PAGE_BACKWARD_TEXTURES,
+            b -> {
+                if (currentPage > 0) currentPage--;
+            },
+            Text.empty()
+        );
+
+        nextPageButton = new TexturedButtonWidget(
+            pageNextX,
+            pageButtonY,
+            12,
+            17,
+            PAGE_FORWARD_TEXTURES,
+            b -> {
+                if (currentPage < pageCount - 1) currentPage++;
+            },
+            Text.empty()
+        );
 
         // addDrawableChild(prevPageButton);
         // addDrawableChild(nextPageButton);

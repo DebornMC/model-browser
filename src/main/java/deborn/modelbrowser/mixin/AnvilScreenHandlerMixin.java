@@ -112,7 +112,9 @@ public abstract class AnvilScreenHandlerMixin {
         @Local(ordinal = 1) LocalRef<ItemStack> itemStack2
     ) {
         if(!itemStack.get().contains(DataComponentTypes.CUSTOM_DATA)) return;
-        NbtCompound tag = itemStack.get().get(DataComponentTypes.CUSTOM_DATA).copyNbt();
+        NbtComponent customDataComp = itemStack.get().get(DataComponentTypes.CUSTOM_DATA);
+        if (customDataComp == null) return;
+        NbtCompound tag = customDataComp.copyNbt();
         if(!tag.getBoolean("model_browser", false)) {
             if (StringHelper.isBlank(this.newItemName) || this.newItemName == null) {
                 if (!itemStack.get().contains(DataComponentTypes.CUSTOM_NAME)) {

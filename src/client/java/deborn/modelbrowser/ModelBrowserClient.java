@@ -8,12 +8,15 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.resource.featuretoggle.FeatureFlags;
 import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class ModelBrowserClient implements ClientModInitializer {
     public static FeatureSet enabledFeatures = FeatureFlags.FEATURE_MANAGER.getFeatureSet();
     @Override
     public void onInitializeClient() {
-        ModConfig.register();
+        if (FabricLoader.getInstance().isModLoaded("modmenu") && FabricLoader.getInstance().isModLoaded("cloth-config")) {
+            ModConfig.register();
+        }
         ModelBrowserReloadListener.register();
         ModelCreativeTab.register();
 
