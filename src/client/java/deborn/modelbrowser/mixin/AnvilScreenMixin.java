@@ -134,7 +134,7 @@ public abstract class AnvilScreenMixin extends Screen {
             17,
             PAGE_BACKWARD_TEXTURES,
             b -> {
-                if (currentPage > 0) currentPage--;
+                // if (currentPage > 0) currentPage--;
             },
             Text.empty()
         );
@@ -146,7 +146,7 @@ public abstract class AnvilScreenMixin extends Screen {
             17,
             PAGE_FORWARD_TEXTURES,
             b -> {
-                if (currentPage < pageCount - 1) currentPage++;
+                // if (currentPage < pageCount - 1) currentPage++;
             },
             Text.empty()
         );
