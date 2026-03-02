@@ -31,7 +31,7 @@ import deborn.modelbrowser.config.ModConfig;
 
 import java.util.List;
 
-@Mixin(AnvilScreen.class)
+@Mixin(value = AnvilScreen.class, remap = false)
 public abstract class AnvilScreenMixin extends Screen {
     @Shadow
     private TextFieldWidget nameField;
@@ -99,7 +99,9 @@ public abstract class AnvilScreenMixin extends Screen {
 
     @Inject(method = "setup", at = @At("TAIL"))
     private void setupUI(CallbackInfo ci) {
-        if (!ModConfig.INSTANCE.showAnvilScreenTab) return;
+        if (ModConfig.INSTANCE != null && !ModConfig.INSTANCE.showAnvilScreenTab) {
+            return;
+        }
         
         nameField.setWidth(86);
 

@@ -1,6 +1,6 @@
 package deborn.modelbrowser;
 
-import deborn.modelbrowser.config.ModConfig;
+import deborn.modelbrowser.config.AutoConfigIntegration;
 import deborn.modelbrowser.creative.CreativeScreenManager;
 import deborn.modelbrowser.creative.ModelCreativeTab;
 import net.fabricmc.api.ClientModInitializer;
@@ -14,8 +14,8 @@ public class ModelBrowserClient implements ClientModInitializer {
     public static FeatureSet enabledFeatures = FeatureFlags.FEATURE_MANAGER.getFeatureSet();
     @Override
     public void onInitializeClient() {
-        if (FabricLoader.getInstance().isModLoaded("modmenu") && FabricLoader.getInstance().isModLoaded("cloth-config")) {
-            ModConfig.register();
+        if (FabricLoader.getInstance().isModLoaded("cloth-config")) {
+            AutoConfigIntegration.init();
         }
         ModelBrowserReloadListener.register();
         ModelCreativeTab.register();
