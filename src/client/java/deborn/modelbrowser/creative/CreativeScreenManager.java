@@ -25,7 +25,6 @@ public class CreativeScreenManager {
             screen.switchToPage(0);
             
         }
-        
     }
 
     public static void refreshCreativeInventoryScreen(CreativeInventoryScreen screen) {

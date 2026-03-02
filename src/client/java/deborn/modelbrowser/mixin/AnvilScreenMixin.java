@@ -341,8 +341,11 @@ public abstract class AnvilScreenMixin extends Screen {
 
         ItemStack hovered = getItemAtMouse(mouseX, mouseY);
         if (hovered != null) {
+            Text name = hovered.get(DataComponentTypes.CUSTOM_NAME);
             Identifier modelId = hovered.get(DataComponentTypes.ITEM_MODEL);
-            if (modelId != null) {
+            if (name != null) {
+                ctx.drawTooltip(textRenderer, name, mouseX, mouseY);
+            } else if (modelId != null) {
                 ctx.drawTooltip(textRenderer, Text.literal(modelId.toString()), mouseX, mouseY);
             }
         }
