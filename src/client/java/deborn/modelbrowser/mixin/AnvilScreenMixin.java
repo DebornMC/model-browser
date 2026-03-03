@@ -271,8 +271,17 @@ public abstract class AnvilScreenMixin extends Screen {
 
         ItemStack clickedStack = getItemAtMouse((int) click.x(), (int) click.y());
         if (clickedStack != null) {
+            Text name = clickedStack.get(DataComponentTypes.CUSTOM_NAME);
             Identifier modelId = clickedStack.get(DataComponentTypes.ITEM_MODEL);
-            if (modelId != null) {
+            if (name != null) {
+                ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
+                if (handler.getSlot(0).hasStack()) {
+                    nameField.setText("");  
+                    nameField.setText(name.getString());
+                    return true;
+                }
+            }
+            else if (modelId != null) {
                 ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
                 if (handler.getSlot(0).hasStack()) {
                     nameField.setText("");  

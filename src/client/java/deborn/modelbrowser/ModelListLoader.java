@@ -30,7 +30,7 @@ public class ModelListLoader {
     public static void loadAsync() {
         new Thread(() -> loadModels(MinecraftClient.getInstance().getResourceManager())).start();
     }
-
+    
     private static void loadModels(ResourceManager manager) {
         List<ItemStack> stacks = new ArrayList<>();
 
@@ -53,7 +53,8 @@ public class ModelListLoader {
                     if (obj.has("unlisted") && obj.get("unlisted").getAsBoolean()) {
                         continue;
                     }
-
+                    
+                    // Vanilla CIT model definition
                     if (obj.has("model")) {
                         JsonObject modelObj = obj.getAsJsonObject("model");
 
@@ -90,6 +91,7 @@ public class ModelListLoader {
                     }
                     if (namespace.equals("minecraft")) continue;
                     
+                    // Legacy item model definition
                     String path = resourceId.getPath();
                     if (!path.startsWith("items/") || !path.endsWith(".json")) continue;
 
