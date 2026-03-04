@@ -1,7 +1,5 @@
 package deborn.modelbrowser.mixin;
 
-import java.util.List;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -10,13 +8,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import deborn.modelbrowser.ModelBrowser;
-import deborn.modelbrowser.ModelListData;
 import deborn.modelbrowser.config.ModConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
+import deborn.modelbrowser.gui.ModelBrowserWidget;import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
@@ -30,7 +25,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
 import net.minecraft.util.Identifier;
 
 @Mixin(value = AnvilScreen.class, remap = false)
@@ -38,52 +32,10 @@ public abstract class AnvilScreenMixin extends Screen {
     @Shadow
     private TextFieldWidget nameField;
 
-    private static final Identifier RECIPE_BOOK_TEXTURE = Identifier.ofVanilla("textures/gui/recipe_book.png");
+    private TexturedButtonWidget toggleButton;
+    private ModelBrowserWidget modelBrowserWidget;
     private static final ButtonTextures RECIPE_BUTTON_TEXTURES = new ButtonTextures(
             Identifier.ofVanilla("icon/search"));
-    private static final Identifier SLOT_CRAFTABLE_SPRITE = Identifier
-            .ofVanilla("textures/gui/sprites/recipe_book/slot_craftable.png");
-    private static final ButtonTextures PAGE_FORWARD_TEXTURES = new ButtonTextures(
-            Identifier.ofVanilla("recipe_book/page_forward"),
-            Identifier.ofVanilla("recipe_book/page_forward_highlighted"));
-    private static final ButtonTextures PAGE_BACKWARD_TEXTURES = new ButtonTextures(
-            Identifier.ofVanilla("recipe_book/page_backward"),
-            Identifier.ofVanilla("recipe_book/page_backward_highlighted"));
-    private static final Text SEARCH_HINT_TEXT = Text.translatable("gui.recipebook.search_hint")
-            .fillStyle(TextFieldWidget.SEARCH_STYLE);
-
-    private static final int ITEM_SIZE = 25;
-    private static final int GRID_COLUMNS = 5;
-    private static final int MAX_VISIBLE_ROWS = 4;
-    private static final int SHIFT_AMOUNT = 77;
-    private static final int SHIFT_LEFT_AMOUNT = 72;
-
-    private static final int GRID_POSITION_X = 11;
-    private static final int GRID_POSITION_Y = 32;
-
-    private static final int PREV_PAGE_POSITION_X = 38;
-    private static final int NEXT_PAGE_POSITION_X = 93;
-    private static final int PAGE_BUTTONS_POSITION_Y = 137;
-
-    private static final int PAGE_COUNT_POSITION_X = 64;
-    private static final int PAGE_COUNT_POSITION_Y = 141;
-
-    private static final int SEARCH_BOX_POSITION_X = 25;
-    private static final int SEARCH_BOX_POSITION_Y = 13;
-
-    private String lastSearch;
-    private boolean uiShifted = false;
-    private int pageCount;
-
-    private TexturedButtonWidget toggleButton;
-    private TextFieldWidget searchField;
-    private ScreenRect searchFieldRect;
-    
-    private TexturedButtonWidget nextPageButton;
-    private TexturedButtonWidget prevPageButton;
-
-    private int currentPage = 0;
-
     protected AnvilScreenMixin(Text title) {
         super(title);
     }
@@ -106,18 +58,6 @@ public abstract class AnvilScreenMixin extends Screen {
         }
         
         nameField.setWidth(86);
-
-        int searchX = this.getLeft() + SEARCH_BOX_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
-        int searchY = this.getTop() + SEARCH_BOX_POSITION_Y;    
-
-        searchField = new TextFieldWidget(textRenderer, searchX, searchY, 109, 14, Text.translatable("itemGroup.search"));
-        searchField.setMaxLength(50);
-        searchField.setChangedListener(this::filterModelStacks);
-        searchField.setPlaceholder(SEARCH_HINT_TEXT);
-        searchField.visible = uiShifted;
-        updateSearchRect();
-
-
         toggleButton = new TexturedButtonWidget(
                 this.getLeft() + 154,
                 this.getTop() + 22,
@@ -126,99 +66,41 @@ public abstract class AnvilScreenMixin extends Screen {
                 b -> toggleGuiShift(),
                 Text.translatable("modelbrowser.open_menu"));
         addDrawableChild(toggleButton);
-        
-        int pagePrevX = this.getLeft() + PREV_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
-        int pageNextX = this.getLeft() + NEXT_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
-        int pageButtonY = this.getTop() + PAGE_BUTTONS_POSITION_Y;
-
-        prevPageButton = new TexturedButtonWidget(
-            pagePrevX,
-            pageButtonY,
-            12,
-            17,
-            PAGE_BACKWARD_TEXTURES,
-            b -> {
-                // if (currentPage > 0) currentPage--;
-            },
-            Text.empty()
+        modelBrowserWidget = new ModelBrowserWidget(client, this.width, this.height);
+        modelBrowserWidget.initialize(
+                this::filterModelStacks
         );
-
-        nextPageButton = new TexturedButtonWidget(
-            pageNextX,
-            pageButtonY,
-            12,
-            17,
-            PAGE_FORWARD_TEXTURES,
-            b -> {
-                // if (currentPage < pageCount - 1) currentPage++;
-            },
-            Text.empty()
-        );
-
-        // addDrawableChild(prevPageButton);
-        // addDrawableChild(nextPageButton);
-
-        prevPageButton.visible = false;
-        nextPageButton.visible = false;
-
-        if (uiShifted) {
-            shiftUI(+SHIFT_AMOUNT);
-        }
-        filterModelStacks("");
     }
 
     private void shiftUI(int dx) {
         HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
-
         acc.setX(acc.getX() + dx);
-        toggleButton.setX(toggleButton.getX() + dx);
         nameField.setX(nameField.getX() + dx);
-
-        prevPageButton.setX(prevPageButton.getX() + dx);
-        nextPageButton.setX(nextPageButton.getX() + dx);
-
-        searchField.setX(searchField.getX() + dx);
-        updateSearchRect();
-    }
-
-    private void updateSearchRect() {
-        searchFieldRect = new ScreenRect(
-            searchField.getX() - 17, 
-            searchField.getY(), 
-            searchField.getWidth() + 17, 
-            searchField.getHeight()
-        );
+        toggleButton.setX(toggleButton.getX() + dx);
     }
 
     private void toggleGuiShift() {
-        int dir = uiShifted ? -SHIFT_AMOUNT : SHIFT_AMOUNT;
+        int dir = modelBrowserWidget.isOpen() ? -77 : 77;
         shiftUI(dir);
+        
+        modelBrowserWidget.toggle();
 
-        searchField.visible = !uiShifted;
-        searchField.active = !uiShifted;
-
-        if (uiShifted) {
+        if (!modelBrowserWidget.isOpen()) {
             nameField.setFocusUnlocked(false);
             nameField.setFocused(true);
         } else {
             nameField.setFocusUnlocked(true);
             nameField.setFocused(false);
         }
-
-        uiShifted = !uiShifted;
     }
 
     private void filterModelStacks(String text) {
-        if (text.equals(lastSearch)) return;
-        lastSearch = text;
-
-        ModelListData.filter(text);
-        currentPage = 0;
+        modelBrowserWidget.filterModelStacks(text);
     }
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void interceptKeys(KeyInput input, CallbackInfoReturnable<Boolean> cir) {
-        if (!uiShifted) return;
+        if (!modelBrowserWidget.isOpen()) return;
         if (input.isEscape()) {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client != null && client.player != null) {
@@ -228,35 +110,19 @@ public abstract class AnvilScreenMixin extends Screen {
             return;
         }
 
-        if (searchField.isActive()) {
-            searchField.keyPressed(input);
+        if (modelBrowserWidget.getSearchField().isActive()) {
+            modelBrowserWidget.getSearchField().keyPressed(input);
             cir.setReturnValue(true);
         }
     }
-    private ItemStack getItemAtMouse(int mouseX, int mouseY) {
-        if (!uiShifted) return null;
+    @Inject(method = "drawBackground", at = @At("TAIL"))
+    private void drawShiftedRecipeBook(DrawContext ctx, float delta, int mouseX, int mouseY, CallbackInfo ci) {
+        modelBrowserWidget.drawBackground(ctx);
+    }
 
-        List<ItemStack> stacks = ModelListData.getFiltered();
-
-        int itemsPerPage = GRID_COLUMNS * MAX_VISIBLE_ROWS;
-        int start = currentPage * itemsPerPage;
-        int end = Math.min(start + itemsPerPage, stacks.size());
-
-        for (int i = start; i < end; i++) {
-            int index = i - start;
-            int row = index / GRID_COLUMNS;
-            int col = index % GRID_COLUMNS;
-
-            int x = this.getLeft() + GRID_POSITION_X + col * ITEM_SIZE - SHIFT_LEFT_AMOUNT;
-            int y = this.getTop() + GRID_POSITION_Y + row * ITEM_SIZE;
-
-            if (mouseX >= x && mouseX <= x + ITEM_SIZE &&
-                mouseY >= y && mouseY <= y + ITEM_SIZE) {
-                return stacks.get(i);
-            }
-        }
-
-        return null;
+    @Inject(method = "drawForeground", at = @At("TAIL"))
+    private void drawModelGrid(DrawContext ctx, int mouseX, int mouseY, CallbackInfo ci) {
+        modelBrowserWidget.drawForeground(ctx, mouseX, mouseY);
     }
     private int findMatchingInventorySlot(PlayerInventory inv, ItemStack target) {
         for (int i = 0; i < inv.size(); i++) {
@@ -273,26 +139,27 @@ public abstract class AnvilScreenMixin extends Screen {
         int playerInvStart = handler.slots.size() - 36;
 
         if (invSlot < 9) {
-            // hotbar → last 9 slots
             return playerInvStart + 27 + invSlot;
         } else {
-            // main inventory → first 27 slots
             return playerInvStart + (invSlot - 9);
         }
     }
+
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
-        super.mouseClicked(click, doubled);
+        if (!modelBrowserWidget.isOpen()) return super.mouseClicked(click, doubled);
 
-        if (!uiShifted) return false;
-
-        if (prevPageButton.mouseClicked(click, doubled)) { currentPage--; return true; }
-        if (nextPageButton.mouseClicked(click, doubled)) { currentPage++; return true; }
+        if (modelBrowserWidget.getPrevPageButton().mouseClicked(click, doubled)) {
+            return true;
+        }
+        if (modelBrowserWidget.getNextPageButton().mouseClicked(click, doubled)) {
+            return true;
+        }
 
         HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
         ScreenHandler handler = acc.getHandler();
 
-        ItemStack clickedStack = getItemAtMouse((int) click.x(), (int) click.y());
+        ItemStack clickedStack = modelBrowserWidget.getItemAtMouse((int) click.x(), (int) click.y());
         if (clickedStack != null) {
             Text name = clickedStack.get(DataComponentTypes.CUSTOM_NAME);
             Identifier modelId = clickedStack.get(DataComponentTypes.ITEM_MODEL);
@@ -309,9 +176,25 @@ public abstract class AnvilScreenMixin extends Screen {
                     handler.syncId,
                     handlerSlot,
                     0,
-                    SlotActionType.QUICK_MOVE,
+                    SlotActionType.PICKUP_ALL,
                     client.player
                 );
+                client.interactionManager.clickSlot(
+                    handler.syncId,
+                    0,
+                    0,
+                    SlotActionType.PICKUP,
+                    client.player
+                );
+                if (handler.getSlot(0).hasStack()) {
+                    client.interactionManager.clickSlot(
+                        handler.syncId,
+                        handlerSlot,
+                        0,
+                        SlotActionType.PICKUP_ALL,
+                        client.player
+                    );
+                }
 
                 nameField.setText("");
                 nameField.setText(name.getString());
@@ -328,89 +211,20 @@ public abstract class AnvilScreenMixin extends Screen {
                 }
             }
         }		
-        if (this.searchField != null) {
-            boolean bl = this.searchFieldRect != null && this.searchFieldRect.contains((int) click.x(), (int) click.y());
+        if (modelBrowserWidget.getSearchField() != null) {
+            boolean bl = modelBrowserWidget.getSearchFieldRect() != null && modelBrowserWidget.getSearchFieldRect().contains((int) click.x(), (int) click.y());
             if (bl) {
-                this.setFocused(searchField);
-                this.searchField.setFocused(true);
+                this.setFocused(modelBrowserWidget.getSearchField());
+                modelBrowserWidget.getSearchField().setFocused(true);
                 return true;
             }
-            this.searchField.setFocused(false);
+            modelBrowserWidget.getSearchField().setFocused(false);
         }
-        return false;
-    }
-
-    
-    @Inject(method = "drawBackground", at = @At("TAIL"))
-    private void drawShiftedRecipeBook(DrawContext ctx, float delta, int mouseX, int mouseY, CallbackInfo ci) {
-        if (!uiShifted)
-            return;
-
-        int x = this.getLeft() - SHIFT_LEFT_AMOUNT;
-        int y = this.getTop();
-
-        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, RECIPE_BOOK_TEXTURE, x, y,
-                1.0F, 1.0F, 147, 166, 256, 256);
-    }
-
-    @Inject(method = "drawForeground", at = @At("TAIL"))
-    private void drawModelGrid(DrawContext ctx, int mouseX, int mouseY, CallbackInfo ci) {
-        if (!uiShifted)
-            return;
-
-        List<ItemStack> stacks = ModelListData.getFiltered();
-
-        int itemsPerPage = GRID_COLUMNS * MAX_VISIBLE_ROWS;
-        pageCount = (int) Math.ceil(stacks.size() / (double) itemsPerPage);
-
-        currentPage = Math.min(currentPage, Math.max(0, pageCount - 1));
-
-        int start = currentPage * itemsPerPage;
-        int end = Math.min(start + itemsPerPage, stacks.size());
-
-        for (int i = start; i < end; i++) {
-            int index = i - start;
-            int row = index / GRID_COLUMNS;
-            int col = index % GRID_COLUMNS;
-
-            int x = GRID_POSITION_X + col * ITEM_SIZE - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
-            int y = GRID_POSITION_Y + row * ITEM_SIZE;
-
-            ctx.drawTexture(RenderPipelines.GUI_TEXTURED, SLOT_CRAFTABLE_SPRITE,
-                    x, y, 0, 0, ITEM_SIZE, ITEM_SIZE, ITEM_SIZE, ITEM_SIZE);
-
-            ctx.drawItem(stacks.get(i), x + 4, y + 4);
-
-        }
-
-        prevPageButton.visible = currentPage > 0;
-        nextPageButton.visible = currentPage < pageCount - 1;
-
-        ItemStack hovered = getItemAtMouse(mouseX, mouseY);
-        if (hovered != null) {
-            Text name = hovered.get(DataComponentTypes.CUSTOM_NAME);
-            Identifier modelId = hovered.get(DataComponentTypes.ITEM_MODEL);
-            if (name != null) {
-                ctx.drawTooltip(textRenderer, name, mouseX, mouseY);
-            } else if (modelId != null) {
-                ctx.drawTooltip(textRenderer, Text.literal(modelId.toString()), mouseX, mouseY);
-            }
-        }
+        return super.mouseClicked(click, doubled);
     }
 
     @Override public void render(DrawContext ctx, int mouseX, int mouseY, float deltaTicks) {
         super.render(ctx, mouseX, mouseY, deltaTicks);
-        if (uiShifted) {
-            prevPageButton.render(ctx, mouseX, mouseY, deltaTicks);
-            nextPageButton.render(ctx, mouseX, mouseY, deltaTicks);
-            searchField.render(ctx, mouseX, mouseY, deltaTicks);
-            if (this.pageCount > 1) {
-                Text text = Text.translatable("gui.recipebook.page", new Object[]{this.currentPage + 1, this.pageCount});
-                int x = this.getLeft() + PAGE_COUNT_POSITION_X - SHIFT_LEFT_AMOUNT;
-                int y = this.getTop() + PAGE_COUNT_POSITION_Y;
-                ctx.drawTextWithShadow(this.client.textRenderer, text, x, y, Colors.WHITE);
-            }
-        }
+        modelBrowserWidget.render(ctx, mouseX, mouseY, deltaTicks);
     }
-
 }
