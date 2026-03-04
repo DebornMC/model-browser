@@ -1,23 +1,6 @@
 package deborn.modelbrowser.mixin;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.ScreenRect;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.AnvilScreen;
-import net.minecraft.client.gui.screen.ButtonTextures;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Identifier;
+import java.util.List;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,10 +9,29 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import deborn.modelbrowser.ModelBrowser;
 import deborn.modelbrowser.ModelListData;
 import deborn.modelbrowser.config.ModConfig;
-
-import java.util.List;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.ScreenRect;
+import net.minecraft.client.gui.screen.ButtonTextures;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.AnvilScreen;
+import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.widget.TexturedButtonWidget;
+import net.minecraft.client.input.KeyInput;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.text.Text;
+import net.minecraft.util.Colors;
+import net.minecraft.util.Identifier;
 
 @Mixin(value = AnvilScreen.class, remap = false)
 public abstract class AnvilScreenMixin extends Screen {
@@ -256,7 +258,28 @@ public abstract class AnvilScreenMixin extends Screen {
 
         return null;
     }
+    private int findMatchingInventorySlot(PlayerInventory inv, ItemStack target) {
+        for (int i = 0; i < inv.size(); i++) {
+            ItemStack stack = inv.getStack(i);
+            ModelBrowser.LOGGER.info("inventory " + i + ": " + stack + " | clicked: " + target);
+            if (!stack.isEmpty() && ItemStack.areItemsEqual(stack, target)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
+    private int playerInvIndexToHandlerSlot(ScreenHandler handler, int invSlot) {
+        int playerInvStart = handler.slots.size() - 36;
+
+        if (invSlot < 9) {
+            // hotbar → last 9 slots
+            return playerInvStart + 27 + invSlot;
+        } else {
+            // main inventory → first 27 slots
+            return playerInvStart + (invSlot - 9);
+        }
+    }
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
         super.mouseClicked(click, doubled);
@@ -275,12 +298,27 @@ public abstract class AnvilScreenMixin extends Screen {
             Identifier modelId = clickedStack.get(DataComponentTypes.ITEM_MODEL);
             if (name != null) {
                 ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
-                if (handler.getSlot(0).hasStack()) {
-                    nameField.setText("");  
-                    nameField.setText(name.getString());
-                    return true;
+                PlayerInventory inv = client.player.getInventory();
+                int invSlot = findMatchingInventorySlot(inv, clickedStack);
+                if (invSlot == -1) {
+                    return true; // no matching item in inventory
                 }
+                int handlerSlot = playerInvIndexToHandlerSlot(handler, invSlot);
+                
+                client.interactionManager.clickSlot(
+                    handler.syncId,
+                    handlerSlot,
+                    0,
+                    SlotActionType.QUICK_MOVE,
+                    client.player
+                );
+
+                nameField.setText("");
+                nameField.setText(name.getString());
+
+                return true;
             }
+            
             else if (modelId != null) {
                 ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
                 if (handler.getSlot(0).hasStack()) {
