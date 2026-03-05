@@ -7,13 +7,19 @@ import deborn.modelbrowser.config.ModConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.screen.ButtonTextures;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.Slot;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
 import net.minecraft.util.Identifier;
@@ -63,6 +69,7 @@ public class ModelBrowserWidget {
     private TexturedButtonWidget prevPageButton;
 
     // References
+    private final MinecraftClient client;
     private int screenLeft;
     private int screenTop;
     private int screenWidth;
@@ -70,6 +77,7 @@ public class ModelBrowserWidget {
     private TextRenderer textRenderer;
 
     public ModelBrowserWidget(MinecraftClient client, int screenWidth, int screenHeight) {
+        this.client = client;
         this.textRenderer = client.textRenderer;
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
@@ -132,6 +140,109 @@ public class ModelBrowserWidget {
 
         searchField.visible = ModConfig.INSTANCE.isModelBrowserOpen;
         searchField.active = ModConfig.INSTANCE.isModelBrowserOpen;
+    }
+
+    public boolean handleClick(Click click, boolean doubled, ScreenHandler handler, TextFieldWidget nameField, Screen screen) {
+        if (prevPageButton.mouseClicked(click, doubled)) {
+            return true;
+        }
+        if (nextPageButton.mouseClicked(click, doubled)) {
+            return true;
+        }
+
+        ItemStack clickedStack = getItemAtMouse((int) click.x(), (int) click.y());
+        if (clickedStack != null) {
+            Text name = clickedStack.get(DataComponentTypes.CUSTOM_NAME);
+            Identifier modelId = clickedStack.get(DataComponentTypes.ITEM_MODEL);
+            if (name != null) {
+                ClickableWidget.playClickSound(client.getSoundManager());
+                int invSlot = findMatchingInventorySlot(handler, clickedStack);
+                if (invSlot == -1) {
+                    return true; // still consume the click even if no match
+                }
+
+                client.interactionManager.clickSlot(
+                        handler.syncId,
+                        invSlot,
+                        0,
+                        SlotActionType.PICKUP,
+                        client.player
+                );
+                client.interactionManager.clickSlot(
+                        handler.syncId,
+                        invSlot,
+                        0,
+                        SlotActionType.PICKUP_ALL,
+                        client.player
+                );
+                boolean anvilSlotHadItem = handler.getSlot(0).hasStack();
+                client.interactionManager.clickSlot(
+                        handler.syncId,
+                        0,
+                        0,
+                        SlotActionType.PICKUP,
+                        client.player
+                );
+                if (anvilSlotHadItem) {
+                    client.interactionManager.clickSlot(
+                            handler.syncId,
+                            invSlot,
+                            0,
+                            SlotActionType.PICKUP,
+                            client.player
+                    );
+                }
+
+                nameField.setText("");
+                nameField.setText(name.getString());
+
+                return true;
+            } else if (modelId != null) {
+                ClickableWidget.playClickSound(client.getSoundManager());
+                if (handler.getSlot(0).hasStack()) {
+                    nameField.setText("");  
+                    nameField.setText(modelId.toString());
+                    return true;
+                }
+            }
+        }
+
+        if (searchField != null) {
+            boolean bl = searchFieldRect != null && searchFieldRect.contains((int) click.x(), (int) click.y());
+            if (bl) {
+                screen.setFocused(searchField);
+                searchField.setFocused(true);
+                return true;
+            }
+            searchField.setFocused(false);
+        }
+
+        // Consume clicks within the widget bounds to prevent vanilla behavior
+        if (isClickInWidgetBounds((int) click.x(), (int) click.y())) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean handleRelease(Click click) {
+        return isClickInWidgetBounds((int) click.x(), (int) click.y());
+    }
+
+    private boolean isClickInWidgetBounds(int mouseX, int mouseY) {
+        int x = screenLeft - SHIFT_LEFT_AMOUNT;
+        int y = screenTop;
+        return mouseX >= x && mouseX < x + 147 && mouseY >= y && mouseY < y + 166;
+    }
+
+    private int findMatchingInventorySlot(ScreenHandler handler, ItemStack target) {
+        for (int i = 0; i < handler.slots.size(); i++) {
+            Slot slot = handler.getSlot(i);
+            if (slot.hasStack() && ItemStack.areItemsEqual(slot.getStack(), target)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     public void filterModelStacks(String text) {
