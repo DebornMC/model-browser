@@ -9,7 +9,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import deborn.modelbrowser.ModelBrowser;
 import deborn.modelbrowser.config.ModConfig;
-import deborn.modelbrowser.gui.ModelBrowserWidget;import net.minecraft.client.MinecraftClient;
+import deborn.modelbrowser.gui.ModelBrowserWidget;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
@@ -36,6 +37,8 @@ public abstract class AnvilScreenMixin extends Screen {
     private ModelBrowserWidget modelBrowserWidget;
     private static final ButtonTextures RECIPE_BUTTON_TEXTURES = new ButtonTextures(
             Identifier.ofVanilla("icon/search"));
+    private static final int UI_SHIFT_AMOUNT = 77;
+    
     protected AnvilScreenMixin(Text title) {
         super(title);
     }
@@ -56,46 +59,33 @@ public abstract class AnvilScreenMixin extends Screen {
         if (ModConfig.INSTANCE != null && !ModConfig.INSTANCE.showAnvilScreenTab) {
             return;
         }
-        
+        modelBrowserWidget = new ModelBrowserWidget(client, this.width, this.height);
+        modelBrowserWidget.initialize();
+
         nameField.setWidth(86);
         toggleButton = new TexturedButtonWidget(
                 this.getLeft() + 154,
                 this.getTop() + 22,
                 12, 12,
                 RECIPE_BUTTON_TEXTURES,
-                b -> toggleGuiShift(),
+                b -> toggleModelBrowser(),
                 Text.translatable("modelbrowser.open_menu"));
         addDrawableChild(toggleButton);
-        modelBrowserWidget = new ModelBrowserWidget(client, this.width, this.height);
-        modelBrowserWidget.initialize(
-                this::filterModelStacks
-        );
-    }
 
-    private void shiftUI(int dx) {
-        HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
-        acc.setX(acc.getX() + dx);
-        nameField.setX(nameField.getX() + dx);
-        toggleButton.setX(toggleButton.getX() + dx);
-    }
-
-    private void toggleGuiShift() {
-        int dir = modelBrowserWidget.isOpen() ? -77 : 77;
-        shiftUI(dir);
-        
-        modelBrowserWidget.toggle();
-
-        if (!modelBrowserWidget.isOpen()) {
-            nameField.setFocusUnlocked(false);
-            nameField.setFocused(true);
-        } else {
-            nameField.setFocusUnlocked(true);
-            nameField.setFocused(false);
+        if (modelBrowserWidget.isOpen()) {
+            shiftUI();
         }
     }
-
-    private void filterModelStacks(String text) {
-        modelBrowserWidget.filterModelStacks(text);
+    private void toggleModelBrowser() {
+        modelBrowserWidget.toggle();
+        shiftUI();
+    }
+    private void shiftUI() {
+        int dir = modelBrowserWidget.isOpen() ? UI_SHIFT_AMOUNT : -UI_SHIFT_AMOUNT;
+        HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
+        acc.setX(acc.getX() + dir);
+        nameField.setX(nameField.getX() + dir);
+        toggleButton.setX(toggleButton.getX() + dir);
     }
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
@@ -224,7 +214,7 @@ public abstract class AnvilScreenMixin extends Screen {
     }
 
     @Override public void render(DrawContext ctx, int mouseX, int mouseY, float deltaTicks) {
-        super.render(ctx, mouseX, mouseY, deltaTicks);
         modelBrowserWidget.render(ctx, mouseX, mouseY, deltaTicks);
+        super.render(ctx, mouseX, mouseY, deltaTicks);
     }
 }

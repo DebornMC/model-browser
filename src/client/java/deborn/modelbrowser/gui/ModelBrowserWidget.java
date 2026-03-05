@@ -3,9 +3,7 @@ package deborn.modelbrowser.gui;
 import java.util.List;
 
 import deborn.modelbrowser.ModelListData;
-import deborn.modelbrowser.config.AutoConfigIntegration;
 import deborn.modelbrowser.config.ModConfig;
-import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.RenderPipelines;
@@ -25,7 +23,6 @@ public class ModelBrowserWidget {
     private static final int ITEM_SIZE = 25;
     private static final int GRID_COLUMNS = 5;
     private static final int MAX_VISIBLE_ROWS = 4;
-    private static final int SHIFT_AMOUNT = 77;
     private static final int SHIFT_LEFT_AMOUNT = 72;
 
     private static final int GRID_POSITION_X = 11;
@@ -80,19 +77,19 @@ public class ModelBrowserWidget {
         this.screenTop = (screenHeight - 166) / 2;
     }
 
-    public void initialize(java.util.function.Consumer<String> onSearch) {
-        int searchX = screenLeft + SEARCH_BOX_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
+    public void initialize() {
+        int searchX = screenLeft + SEARCH_BOX_POSITION_X - SHIFT_LEFT_AMOUNT;
         int searchY = screenTop + SEARCH_BOX_POSITION_Y;
 
         searchField = new TextFieldWidget(textRenderer, searchX, searchY, 109, 14, Text.translatable("itemGroup.search"));
         searchField.setMaxLength(50);
-        searchField.setChangedListener(onSearch);
+        searchField.setChangedListener(this::filterModelStacks);
         searchField.setPlaceholder(SEARCH_HINT_TEXT);
         searchField.visible = ModConfig.INSTANCE.isModelBrowserOpen;
         updateSearchRect();
 
-        int pagePrevX = screenLeft + PREV_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
-        int pageNextX = screenLeft + NEXT_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
+        int pagePrevX = screenLeft + PREV_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT;
+        int pageNextX = screenLeft + NEXT_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT;
         int pageButtonY = screenTop + PAGE_BUTTONS_POSITION_Y;
 
         prevPageButton = new TexturedButtonWidget(
@@ -118,22 +115,7 @@ public class ModelBrowserWidget {
         prevPageButton.visible = false;
         nextPageButton.visible = false;
 
-        if (ModConfig.INSTANCE.isModelBrowserOpen) {
-            shiftUI(SHIFT_AMOUNT);
-        }
         filterModelStacks("");
-    }
-
-    public void shift(int dx) {
-        shiftUI(dx);
-    }
-
-    private void shiftUI(int dx) {
-        // toggleButton.setX(toggleButton.getX() + dx);
-        prevPageButton.setX(prevPageButton.getX() + dx);
-        nextPageButton.setX(nextPageButton.getX() + dx);
-        searchField.setX(searchField.getX() + dx);
-        updateSearchRect();
     }
 
     private void updateSearchRect() {
@@ -147,9 +129,6 @@ public class ModelBrowserWidget {
 
     public void toggle() {
         ModConfig.INSTANCE.isModelBrowserOpen = !ModConfig.INSTANCE.isModelBrowserOpen;
-
-        int dir = ModConfig.INSTANCE.isModelBrowserOpen ? SHIFT_AMOUNT : -SHIFT_AMOUNT;
-        shiftUI(dir);
 
         searchField.visible = ModConfig.INSTANCE.isModelBrowserOpen;
         searchField.active = ModConfig.INSTANCE.isModelBrowserOpen;
@@ -172,7 +151,7 @@ public class ModelBrowserWidget {
     }
 
     public ItemStack getItemAtMouse(int mouseX, int mouseY) {
-        if (!ModConfig.INSTANCE.isModelBrowserOpen) return null;
+        if (!this.isOpen()) return null;
 
         List<ItemStack> stacks = ModelListData.getFiltered();
 
@@ -198,7 +177,7 @@ public class ModelBrowserWidget {
     }
 
     public void render(DrawContext ctx, int mouseX, int mouseY, float deltaTicks) {
-        if (ModConfig.INSTANCE.isModelBrowserOpen) {
+        if (this.isOpen()) {
             prevPageButton.render(ctx, mouseX, mouseY, deltaTicks);
             nextPageButton.render(ctx, mouseX, mouseY, deltaTicks);
             searchField.render(ctx, mouseX, mouseY, deltaTicks);
@@ -212,7 +191,7 @@ public class ModelBrowserWidget {
     }
 
     public void drawBackground(DrawContext ctx) {
-        if (!ModConfig.INSTANCE.isModelBrowserOpen) return;
+        if (!this.isOpen()) return;
 
         int x = screenLeft - SHIFT_LEFT_AMOUNT;
         int y = screenTop;
@@ -222,7 +201,7 @@ public class ModelBrowserWidget {
     }
 
     public void drawForeground(DrawContext ctx, int mouseX, int mouseY) {
-        if (!ModConfig.INSTANCE.isModelBrowserOpen) return;
+        if (!this.isOpen()) return;
 
         List<ItemStack> stacks = ModelListData.getFiltered();
 
@@ -239,7 +218,7 @@ public class ModelBrowserWidget {
             int row = index / GRID_COLUMNS;
             int col = index % GRID_COLUMNS;
 
-            int x = GRID_POSITION_X + col * ITEM_SIZE - SHIFT_LEFT_AMOUNT - SHIFT_AMOUNT;
+            int x = GRID_POSITION_X + col * ITEM_SIZE - SHIFT_LEFT_AMOUNT - 77;
             int y = GRID_POSITION_Y + row * ITEM_SIZE;
 
             ctx.drawTexture(RenderPipelines.GUI_TEXTURED, SLOT_CRAFTABLE_SPRITE,
