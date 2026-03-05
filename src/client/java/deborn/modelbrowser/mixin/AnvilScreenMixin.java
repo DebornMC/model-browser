@@ -24,6 +24,7 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -114,26 +115,15 @@ public abstract class AnvilScreenMixin extends Screen {
     private void drawModelGrid(DrawContext ctx, int mouseX, int mouseY, CallbackInfo ci) {
         modelBrowserWidget.drawForeground(ctx, mouseX, mouseY);
     }
-    private int findMatchingInventorySlot(PlayerInventory inv, ItemStack target) {
-        for (int i = 0; i < inv.size(); i++) {
-            ItemStack stack = inv.getStack(i);
-            ModelBrowser.LOGGER.info("inventory " + i + ": " + stack + " | clicked: " + target);
-            if (!stack.isEmpty() && ItemStack.areItemsEqual(stack, target)) {
+    private int findMatchingInventorySlot(ScreenHandler handler, ItemStack target) {
+        for (int i = 0; i < handler.slots.size(); i++) {
+            Slot slot = handler.getSlot(i);
+            if (slot.hasStack() && ItemStack.areItemsEqual(slot.getStack(), target)) {
                 return i;
             }
         }
         return -1;
-    }
-
-    private int playerInvIndexToHandlerSlot(ScreenHandler handler, int invSlot) {
-        int playerInvStart = handler.slots.size() - 36;
-
-        if (invSlot < 9) {
-            return playerInvStart + 27 + invSlot;
-        } else {
-            return playerInvStart + (invSlot - 9);
-        }
-    }
+    }   
 
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
@@ -155,20 +145,26 @@ public abstract class AnvilScreenMixin extends Screen {
             Identifier modelId = clickedStack.get(DataComponentTypes.ITEM_MODEL);
             if (name != null) {
                 ClickableWidget.playClickSound(MinecraftClient.getInstance().getSoundManager());
-                PlayerInventory inv = client.player.getInventory();
-                int invSlot = findMatchingInventorySlot(inv, clickedStack);
+                int invSlot = findMatchingInventorySlot(handler, clickedStack);
                 if (invSlot == -1) {
                     return true; // no matching item in inventory
                 }
-                int handlerSlot = playerInvIndexToHandlerSlot(handler, invSlot);
                 
                 client.interactionManager.clickSlot(
                     handler.syncId,
-                    handlerSlot,
+                    invSlot,
+                    0,
+                    SlotActionType.PICKUP,
+                    client.player
+                );
+                client.interactionManager.clickSlot(
+                    handler.syncId,
+                    invSlot,
                     0,
                     SlotActionType.PICKUP_ALL,
                     client.player
                 );
+                boolean anvilSlotHadItem = handler.getSlot(0).hasStack();
                 client.interactionManager.clickSlot(
                     handler.syncId,
                     0,
@@ -176,12 +172,12 @@ public abstract class AnvilScreenMixin extends Screen {
                     SlotActionType.PICKUP,
                     client.player
                 );
-                if (handler.getSlot(0).hasStack()) {
+                if (anvilSlotHadItem) {
                     client.interactionManager.clickSlot(
                         handler.syncId,
-                        handlerSlot,
+                        invSlot,
                         0,
-                        SlotActionType.PICKUP_ALL,
+                        SlotActionType.PICKUP,
                         client.player
                     );
                 }

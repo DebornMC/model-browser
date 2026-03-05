@@ -20,6 +20,8 @@ public class ModelListData {
     public static synchronized void setStacks(List<ItemStack> stacks) {
         MODEL_STACKS.clear();
         MODEL_STACKS.addAll(stacks);
+        FILTERED_STACKS.clear();
+        FILTERED_STACKS.addAll(stacks);
         loaded = true;
     }
 

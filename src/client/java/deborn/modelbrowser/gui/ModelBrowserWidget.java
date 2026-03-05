@@ -115,7 +115,7 @@ public class ModelBrowserWidget {
         prevPageButton.visible = false;
         nextPageButton.visible = false;
 
-        filterModelStacks("");
+        // filterModelStacks("");
     }
 
     private void updateSearchRect() {
@@ -260,10 +260,6 @@ public class ModelBrowserWidget {
 
     public boolean isOpen() {
         return ModConfig.INSTANCE.isModelBrowserOpen;
-    }
-
-    public void toggleOpen(boolean shifted) {
-        ModConfig.INSTANCE.isModelBrowserOpen = !ModConfig.INSTANCE.isModelBrowserOpen;
     }
 
     public int getCurrentPage() {
