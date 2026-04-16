@@ -11,46 +11,45 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.StringUtil;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.equipment.Equippable;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.EquippableComponent;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.screen.AnvilScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.StringHelper;
-
-@Mixin(AnvilScreenHandler.class)
+@Mixin(AnvilMenu.class)
 public abstract class AnvilScreenHandlerMixin {
 
-    @Shadow private String newItemName;
-    @Shadow protected abstract void updateResult();
+    @Shadow private String itemName;
+    @Shadow protected abstract void createResult();
 
     @Unique private Identifier pendingModelId = null;
-    @Unique private Text savedCustomName = null;
+    @Unique private Component savedCustomName = null;
 
-    @Inject(method = "setNewItemName", at = @At("HEAD"))
+    @Inject(method = "setItemName", at = @At("HEAD"))
     private void interceptRename(String newName, CallbackInfoReturnable<Boolean> cir) {
         if (newName == null) return;
 
-        newName = sanitize(newName);
+        newName = validateName(newName);
 
         if (newName.matches("^[a-z0-9_.-]+:[a-z0-9_/.-]+$")) {
             Identifier id = Identifier.tryParse(newName);
             if (id != null) {
                 this.pendingModelId = id;
 
-                Slot inputSlot = ((AnvilScreenHandler)(Object)this).getSlot(0);
-                if (inputSlot.hasStack()) {
-                    ItemStack in = inputSlot.getStack();
-                    if (in.get(DataComponentTypes.CUSTOM_NAME) == null) {
+                Slot inputSlot = ((AnvilMenu)(Object)this).getSlot(0);
+                if (inputSlot.hasItem()) {
+                    ItemStack in = inputSlot.getItem();
+                    if (in.get(DataComponents.CUSTOM_NAME) == null) {
                         this.savedCustomName = null;
                     } else {
-                        this.savedCustomName = in.get(DataComponentTypes.CUSTOM_NAME);
+                        this.savedCustomName = in.get(DataComponents.CUSTOM_NAME);
                     }
                 }
             }
@@ -61,49 +60,49 @@ public abstract class AnvilScreenHandlerMixin {
     }
 
     @Shadow
-    private static String sanitize(String name) {
+    private static String validateName(String name) {
         return name;
     }
 
-    @Inject(method = "updateResult", at = @At("TAIL"))
+    @Inject(method = "createResult", at = @At("TAIL"))
     private void afterUpdateResult(CallbackInfo ci) {
-        AnvilScreenHandler self = (AnvilScreenHandler)(Object)this;
+        AnvilMenu self = (AnvilMenu)(Object)this;
         Identifier id = this.pendingModelId;
         if (id == null) return;                                                                                                                                                                              
 
         Slot output = self.getSlot(2);
-        if (!output.hasStack()) return;
+        if (!output.hasItem()) return;
 
-        ItemStack out = output.getStack();
+        ItemStack out = output.getItem();
 
-        out.set(DataComponentTypes.ITEM_MODEL, id);
+        out.set(DataComponents.ITEM_MODEL, id);
 
         // Restore previous custom_name if there was one, otherwise remove it
         if (this.savedCustomName != null) {
-            out.set(DataComponentTypes.CUSTOM_NAME, this.savedCustomName);
+            out.set(DataComponents.CUSTOM_NAME, this.savedCustomName);
         } else {
-            out.remove(DataComponentTypes.CUSTOM_NAME);
+            out.remove(DataComponents.CUSTOM_NAME);
         }
 
         // make equippable
-        EquippableComponent equippable = EquippableComponent.builder(EquipmentSlot.HEAD).build();
-        if (out.get(DataComponentTypes.EQUIPPABLE) == null)
-            out.set(DataComponentTypes.EQUIPPABLE, equippable);
+        Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
+        if (out.get(DataComponents.EQUIPPABLE) == null)
+            out.set(DataComponents.EQUIPPABLE, equippable);
 
         // remove glint
-        out.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, false);
+        out.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
         
         // custom data
-        NbtCompound compound = new NbtCompound();
+        CompoundTag compound = new CompoundTag();
         compound.putBoolean("model_browser_data", true);
-        NbtComponent customData = NbtComponent.of(compound);
-        out.set(DataComponentTypes.CUSTOM_DATA, customData);
+        CustomData customData = CustomData.of(compound);
+        out.set(DataComponents.CUSTOM_DATA, customData);
 
 
-        output.setStack(out.copy());
+        output.setByPlayer(out.copy());
     }
 
-    @Inject(method = "updateResult", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/StringHelper;isBlank(Ljava/lang/String;)Z"))
+    @Inject(method = "createResult", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/StringUtil;isBlank(Ljava/lang/String;)Z"))
     private void resetItemModel(
         CallbackInfo ci,
         @Local(ordinal = 0) LocalIntRef i, 
@@ -111,26 +110,26 @@ public abstract class AnvilScreenHandlerMixin {
         @Local(ordinal = 0) LocalRef<ItemStack> itemStack, 
         @Local(ordinal = 1) LocalRef<ItemStack> itemStack2
     ) {
-        if(!itemStack.get().contains(DataComponentTypes.CUSTOM_DATA)) return;
-        NbtComponent customDataComp = itemStack.get().get(DataComponentTypes.CUSTOM_DATA);
+        if(!itemStack.get().has(DataComponents.CUSTOM_DATA)) return;
+        CustomData customDataComp = itemStack.get().get(DataComponents.CUSTOM_DATA);
         if (customDataComp == null) return;
-        NbtCompound tag = customDataComp.copyNbt();
-        if(!tag.getBoolean("model_browser", false)) {
-            if (StringHelper.isBlank(this.newItemName) || this.newItemName == null) {
-                if (!itemStack.get().contains(DataComponentTypes.CUSTOM_NAME)) {
+        CompoundTag tag = customDataComp.copyTag();
+        if(!tag.getBooleanOr("model_browser", false)) {
+            if (StringUtil.isBlank(this.itemName) || this.itemName == null) {
+                if (!itemStack.get().has(DataComponents.CUSTOM_NAME)) {
                     j.set(1);
                     i.set(j.get()+i.get());
                 }
                 tag.remove("model_browser_data");
                 if (tag.isEmpty()) {
-                    itemStack2.get().remove(DataComponentTypes.CUSTOM_DATA);
+                    itemStack2.get().remove(DataComponents.CUSTOM_DATA);
                 } else {
-                    itemStack2.get().set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(tag));
+                    itemStack2.get().set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
                 }
-                itemStack2.get().set(DataComponentTypes.ITEM_MODEL, itemStack2.get().getItem().getDefaultStack().get(DataComponentTypes.ITEM_MODEL));
-                itemStack2.get().set(DataComponentTypes.ITEM_NAME, itemStack2.get().getItem().getDefaultStack().get(DataComponentTypes.ITEM_NAME));
-                itemStack2.get().set(DataComponentTypes.EQUIPPABLE, itemStack2.get().getItem().getDefaultStack().get(DataComponentTypes.EQUIPPABLE));
-                itemStack2.get().remove(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE);
+                itemStack2.get().set(DataComponents.ITEM_MODEL, itemStack2.get().getItem().getDefaultInstance().get(DataComponents.ITEM_MODEL));
+                itemStack2.get().set(DataComponents.ITEM_NAME, itemStack2.get().getItem().getDefaultInstance().get(DataComponents.ITEM_NAME));
+                itemStack2.get().set(DataComponents.EQUIPPABLE, itemStack2.get().getItem().getDefaultInstance().get(DataComponents.EQUIPPABLE));
+                itemStack2.get().remove(DataComponents.ENCHANTMENT_GLINT_OVERRIDE);
             }
         }
     }
