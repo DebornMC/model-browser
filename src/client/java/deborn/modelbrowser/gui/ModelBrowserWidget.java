@@ -3,7 +3,7 @@ package deborn.modelbrowser.gui;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ImageButton;
@@ -17,7 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import deborn.modelbrowser.ModelListData;
@@ -44,7 +44,8 @@ public class ModelBrowserWidget {
     private static final int SEARCH_BOX_POSITION_Y = 13;
 
     // Textures and Sprites
-    private static final Identifier RECIPE_BOOK_TEXTURE = Identifier.withDefaultNamespace("textures/gui/recipe_book.png");
+    private static final Identifier RECIPE_BOOK_TEXTURE = Identifier
+            .withDefaultNamespace("textures/gui/recipe_book.png");
     private static final Identifier SLOT_CRAFTABLE_SPRITE = Identifier
             .withDefaultNamespace("textures/gui/sprites/recipe_book/slot_craftable.png");
     private static final WidgetSprites PAGE_FORWARD_TEXTURES = new WidgetSprites(
@@ -100,24 +101,22 @@ public class ModelBrowserWidget {
         int pageButtonY = screenTop + PAGE_BUTTONS_POSITION_Y;
 
         prevPageButton = new ImageButton(
-            pagePrevX,
-            pageButtonY,
-            12,
-            17,
-            PAGE_BACKWARD_TEXTURES,
-            b -> previousPage(),
-            Component.empty()
-        );
+                pagePrevX,
+                pageButtonY,
+                12,
+                17,
+                PAGE_BACKWARD_TEXTURES,
+                b -> previousPage(),
+                Component.empty());
 
         nextPageButton = new ImageButton(
-            pageNextX,
-            pageButtonY,
-            12,
-            17,
-            PAGE_FORWARD_TEXTURES,
-            b -> nextPage(),
-            Component.empty()
-        );
+                pageNextX,
+                pageButtonY,
+                12,
+                17,
+                PAGE_FORWARD_TEXTURES,
+                b -> nextPage(),
+                Component.empty());
 
         prevPageButton.visible = false;
         nextPageButton.visible = false;
@@ -127,11 +126,10 @@ public class ModelBrowserWidget {
 
     private void updateSearchRect() {
         searchFieldRect = new ScreenRectangle(
-            searchField.getX() - 17,
-            searchField.getY(),
-            searchField.getWidth() + 17,
-            searchField.getHeight()
-        );
+                searchField.getX() - 17,
+                searchField.getY(),
+                searchField.getWidth() + 17,
+                searchField.getHeight());
     }
 
     public void toggle() {
@@ -141,7 +139,8 @@ public class ModelBrowserWidget {
         searchField.active = ModConfig.INSTANCE.isModelBrowserOpen;
     }
 
-    public boolean handleClick(MouseButtonEvent click, boolean doubled, AbstractContainerMenu handler, EditBox nameField, Screen screen) {
+    public boolean handleClick(MouseButtonEvent click, boolean doubled, AbstractContainerMenu handler,
+            EditBox nameField, Screen screen) {
         if (prevPageButton.mouseClicked(click, doubled)) {
             return true;
         }
@@ -164,32 +163,28 @@ public class ModelBrowserWidget {
                         handler.containerId,
                         invSlot,
                         0,
-                        ClickType.PICKUP,
-                        client.player
-                );
+                        ContainerInput.PICKUP,
+                        client.player);
                 client.gameMode.handleInventoryMouseClick(
                         handler.containerId,
                         invSlot,
                         0,
-                        ClickType.PICKUP_ALL,
-                        client.player
-                );
+                        ContainerInput.PICKUP_ALL,
+                        client.player);
                 boolean anvilSlotHadItem = handler.getSlot(0).hasItem();
                 client.gameMode.handleInventoryMouseClick(
                         handler.containerId,
                         0,
                         0,
-                        ClickType.PICKUP,
-                        client.player
-                );
+                        ContainerInput.PICKUP,
+                        client.player);
                 if (anvilSlotHadItem) {
                     client.gameMode.handleInventoryMouseClick(
                             handler.containerId,
                             invSlot,
                             0,
-                            ClickType.PICKUP,
-                            client.player
-                    );
+                            ContainerInput.PICKUP,
+                            client.player);
                 }
 
                 nameField.setValue("");
@@ -199,7 +194,7 @@ public class ModelBrowserWidget {
             } else if (modelId != null) {
                 AbstractWidget.playButtonClickSound(client.getSoundManager());
                 if (handler.getSlot(0).hasItem()) {
-                    nameField.setValue("");  
+                    nameField.setValue("");
                     nameField.setValue(modelId.toString());
                     return true;
                 }
@@ -245,7 +240,8 @@ public class ModelBrowserWidget {
     }
 
     public void filterModelStacks(String text) {
-        if (text.equals(lastSearch)) return;
+        if (text.equals(lastSearch))
+            return;
         lastSearch = text;
 
         ModelListData.filter(text);
@@ -253,15 +249,18 @@ public class ModelBrowserWidget {
     }
 
     private void previousPage() {
-        if (currentPage > 0) currentPage--;
+        if (currentPage > 0)
+            currentPage--;
     }
 
     private void nextPage() {
-        if (currentPage < pageCount - 1) currentPage++;
+        if (currentPage < pageCount - 1)
+            currentPage++;
     }
 
     public ItemStack getItemAtMouse(int mouseX, int mouseY) {
-        if (!this.isOpen()) return null;
+        if (!this.isOpen())
+            return null;
 
         List<ItemStack> stacks = ModelListData.getFiltered();
 
@@ -278,7 +277,7 @@ public class ModelBrowserWidget {
             int y = screenTop + GRID_POSITION_Y + row * ITEM_SIZE;
 
             if (mouseX >= x && mouseX <= x + ITEM_SIZE &&
-                mouseY >= y && mouseY <= y + ITEM_SIZE) {
+                    mouseY >= y && mouseY <= y + ITEM_SIZE) {
                 return stacks.get(i);
             }
         }
@@ -286,13 +285,14 @@ public class ModelBrowserWidget {
         return null;
     }
 
-    public void render(GuiGraphics ctx, int mouseX, int mouseY, float deltaTicks) {
+    public void render(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float deltaTicks) {
         if (this.isOpen()) {
             prevPageButton.render(ctx, mouseX, mouseY, deltaTicks);
             nextPageButton.render(ctx, mouseX, mouseY, deltaTicks);
             searchField.render(ctx, mouseX, mouseY, deltaTicks);
             if (this.pageCount > 1) {
-                Component text = Component.translatable("gui.recipebook.page", new Object[]{this.currentPage + 1, this.pageCount});
+                Component text = Component.translatable("gui.recipebook.page",
+                        new Object[] { this.currentPage + 1, this.pageCount });
                 int x = screenLeft + PAGE_COUNT_POSITION_X - SHIFT_LEFT_AMOUNT;
                 int y = screenTop + PAGE_COUNT_POSITION_Y;
                 ctx.drawString(textRenderer, text, x, y, CommonColors.WHITE);
@@ -300,8 +300,9 @@ public class ModelBrowserWidget {
         }
     }
 
-    public void drawBackground(GuiGraphics ctx) {
-        if (!this.isOpen()) return;
+    public void drawBackground(GuiGraphicsExtractor ctx) {
+        if (!this.isOpen())
+            return;
 
         int x = screenLeft - SHIFT_LEFT_AMOUNT;
         int y = screenTop;
@@ -310,8 +311,9 @@ public class ModelBrowserWidget {
                 1.0F, 1.0F, 147, 166, 256, 256);
     }
 
-    public void drawForeground(GuiGraphics ctx, int mouseX, int mouseY) {
-        if (!this.isOpen()) return;
+    public void drawForeground(GuiGraphicsExtractor ctx, int mouseX, int mouseY) {
+        if (!this.isOpen())
+            return;
 
         List<ItemStack> stacks = ModelListData.getFiltered();
 

@@ -10,7 +10,7 @@ import java.util.Objects;
 public class ModelBrowserReloadListener implements ResourceManagerReloadListener {
     public static final Identifier ID = Identifier.fromNamespaceAndPath("modelbrowser", "model_reload");
     private boolean firstReload = true;
-    
+
     @Override
     public void onResourceManagerReload(ResourceManager manager) {
         ModelListLoader.loadAsync();
@@ -22,8 +22,9 @@ public class ModelBrowserReloadListener implements ResourceManagerReloadListener
             CreativeScreenManager.markRefreshPending();
         }
     }
+
     public static void register() {
-        ResourceLoader.get(net.minecraft.server.packs.PackType.CLIENT_RESOURCES).registerReloader(Objects.requireNonNull(ID), new ModelBrowserReloadListener());
+        ResourceLoader.get(net.minecraft.server.packs.PackType.CLIENT_RESOURCES)
+                .registerReloadListener(Objects.requireNonNull(ID), new ModelBrowserReloadListener());
     }
 }
-

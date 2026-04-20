@@ -3,7 +3,7 @@ package deborn.modelbrowser.creative;
 import deborn.modelbrowser.ModelBrowser;
 import deborn.modelbrowser.ModelListData;
 import deborn.modelbrowser.config.ModConfig;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -18,7 +18,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Rarity;
 
 public class ModelCreativeTab {
-    
+
     public static final Identifier TAB = Identifier.tryParse(ModelBrowser.MOD_ID);
     public static final ResourceKey<CreativeModeTab> TAB_KEY = ResourceKey.create(Registries.CREATIVE_MODE_TAB, TAB);
 
@@ -26,7 +26,7 @@ public class ModelCreativeTab {
         Registry.register(
                 BuiltInRegistries.CREATIVE_MODE_TAB,
                 TAB,
-                FabricItemGroup.builder()
+                FabricCreativeModeTab.builder()
                         .title(Component.literal("Model Browser"))
                         .icon(() -> new ItemStack(Items.BRUSH))
                         .displayItems((enabled, entries) -> {
@@ -36,14 +36,14 @@ public class ModelCreativeTab {
                                     entries.acceptAll(stacks);
                                 else {
                                     ItemStack placeholder = new ItemStack(Items.BARRIER);
-                                    placeholder.set(DataComponents.ITEM_NAME, Component.translatable("modelbrowser.no_models_loaded"));
+                                    placeholder.set(DataComponents.ITEM_NAME,
+                                            Component.translatable("modelbrowser.no_models_loaded"));
                                     placeholder.set(DataComponents.CREATIVE_SLOT_LOCK, Unit.INSTANCE);
                                     placeholder.set(DataComponents.RARITY, Rarity.COMMON);
                                     entries.accept(placeholder, CreativeModeTab.TabVisibility.PARENT_TAB_ONLY);
                                 }
                             }
                         })
-                        .build()
-        );
+                        .build());
     }
 }
