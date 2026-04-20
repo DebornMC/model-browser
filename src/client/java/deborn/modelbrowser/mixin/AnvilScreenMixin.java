@@ -87,7 +87,7 @@ public abstract class AnvilScreenMixin extends Screen {
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void interceptKeys(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
-        if (!modelBrowserWidget.isOpen())
+        if (modelBrowserWidget == null || !modelBrowserWidget.isOpen())
             return;
         if (input.isEscape()) {
             Minecraft client = Minecraft.getInstance();
@@ -106,17 +106,21 @@ public abstract class AnvilScreenMixin extends Screen {
 
     @Inject(method = "extractBackground", at = @At("TAIL"))
     private void drawShiftedRecipeBook(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        if (modelBrowserWidget == null || !modelBrowserWidget.isOpen())
+            return;
         modelBrowserWidget.drawBackground(ctx);
     }
 
     @Inject(method = "extractLabels", at = @At("TAIL"))
     private void drawModelGrid(GuiGraphicsExtractor ctx, int mouseX, int mouseY, CallbackInfo ci) {
+        if (modelBrowserWidget == null || !modelBrowserWidget.isOpen())
+            return;
         modelBrowserWidget.drawForeground(ctx, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (!modelBrowserWidget.isOpen())
+        if (modelBrowserWidget == null || !modelBrowserWidget.isOpen())
             return super.mouseClicked(click, doubled);
 
         HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
@@ -132,7 +136,7 @@ public abstract class AnvilScreenMixin extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent click) {
-        if (!modelBrowserWidget.isOpen())
+        if (modelBrowserWidget == null || !modelBrowserWidget.isOpen())
             return super.mouseReleased(click);
 
         HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
@@ -147,7 +151,8 @@ public abstract class AnvilScreenMixin extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float deltaTicks) {
-        modelBrowserWidget.extractRenderState(ctx, mouseX, mouseY, deltaTicks);
+        if (modelBrowserWidget != null && modelBrowserWidget.isOpen())
+            modelBrowserWidget.extractRenderState(ctx, mouseX, mouseY, deltaTicks);
         super.extractRenderState(ctx, mouseX, mouseY, deltaTicks);
     }
 }

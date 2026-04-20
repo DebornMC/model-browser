@@ -5,11 +5,33 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
+import net.minecraft.world.InteractionResult;
 
 @Config(name = "modelbrowser")
 public class AutoConfigIntegration implements ConfigData {
 	public static void init() {
 		AutoConfig.register(AutoConfigIntegration.class, GsonConfigSerializer::new);
+
+		var holder = AutoConfig.getConfigHolder(AutoConfigIntegration.class);
+
+		holder.registerLoadListener((h, config) -> {
+			syncToModConfig(config);
+			return InteractionResult.SUCCESS;
+		});
+
+		holder.registerSaveListener((h, config) -> {
+			syncToModConfig(config);
+			return InteractionResult.SUCCESS;
+		});
+
+		syncToModConfig(holder.getConfig());
+	}
+
+	private static void syncToModConfig(AutoConfigIntegration config) {
+		ModConfig.INSTANCE.showCreativeInventoryTab = config.showCreativeInventoryTab;
+		ModConfig.INSTANCE.showAnvilScreenTab = config.showAnvilScreenTab;
+		ModConfig.INSTANCE.showItemModelDefinitionItems = config.showItemModelDefinitionItems;
+		ModConfig.INSTANCE.showRenameableItems = config.showRenameableItems;
 	}
 
 	@ConfigEntry.Gui.Excluded
