@@ -6,13 +6,12 @@ import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 
-
 @Config(name = "modelbrowser")
-public class AutoConfigIntegration implements ConfigData
-{
+public class AutoConfigIntegration implements ConfigData {
 	public static void init() {
 		AutoConfig.register(AutoConfigIntegration.class, GsonConfigSerializer::new);
 	}
+
 	@ConfigEntry.Gui.Excluded
 	private static final ModConfig DEFAULTS = new ModConfig();
 
@@ -21,4 +20,10 @@ public class AutoConfigIntegration implements ConfigData
 
 	@ConfigEntry.Gui.Tooltip()
 	public boolean showAnvilScreenTab = DEFAULTS.showAnvilScreenTab;
+
+	@ConfigEntry.Gui.Tooltip()
+	public boolean showItemModelDefinitionItems = DEFAULTS.showItemModelDefinitionItems;
+
+	@ConfigEntry.Gui.Tooltip()
+	public boolean showRenameableItems = DEFAULTS.showRenameableItems;
 }

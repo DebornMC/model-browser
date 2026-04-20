@@ -22,6 +22,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import deborn.modelbrowser.config.ModConfig;
+
 public class ModelListLoader {
     
     public List<ItemStack> allModelStacks = new ArrayList<>();
@@ -53,63 +55,67 @@ public class ModelListLoader {
                     }
                     
                     // Vanilla CIT model definition
-                    if (obj.has("model")) {
-                        JsonObject modelObj = obj.getAsJsonObject("model");
+                    if (ModConfig.INSTANCE.showRenameableItems) {
+                        if (obj.has("model")) {
+                            JsonObject modelObj = obj.getAsJsonObject("model");
 
-                        if (modelObj.has("type")
-                            && modelObj.get("type").getAsString().equals("minecraft:select")
-                            && modelObj.has("property")
-                            && modelObj.get("property").getAsString().equals("minecraft:component")
-                            && modelObj.has("component")
-                            && modelObj.get("component").getAsString().equals("minecraft:custom_name")
-                            && modelObj.has("cases")) {
+                            if (modelObj.has("type")
+                                && modelObj.get("type").getAsString().equals("minecraft:select")
+                                && modelObj.has("property")
+                                && modelObj.get("property").getAsString().equals("minecraft:component")
+                                && modelObj.has("component")
+                                && modelObj.get("component").getAsString().equals("minecraft:custom_name")
+                                && modelObj.has("cases")) {
 
-                            String path = resourceId.getPath();
-                            String itemId = path.substring("items/".length(), path.length() - ".json".length());
-                            Identifier itemIdentifier = Identifier.tryParse(namespace + ":" + itemId);
-                            if (itemIdentifier == null) continue;
+                                String path = resourceId.getPath();
+                                String itemId = path.substring("items/".length(), path.length() - ".json".length());
+                                Identifier itemIdentifier = Identifier.tryParse(namespace + ":" + itemId);
+                                if (itemIdentifier == null) continue;
 
-                            for (JsonElement caseEl : modelObj.getAsJsonArray("cases")) {
-                                JsonObject caseObj = caseEl.getAsJsonObject();
-                                if (!caseObj.has("when")) continue;
+                                for (JsonElement caseEl : modelObj.getAsJsonArray("cases")) {
+                                    JsonObject caseObj = caseEl.getAsJsonObject();
+                                    if (!caseObj.has("when")) continue;
 
-                                Item item = BuiltInRegistries.ITEM.getValue(itemIdentifier);
-                                ItemStack stack = new ItemStack(item);
+                                    Item item = BuiltInRegistries.ITEM.getValue(itemIdentifier);
+                                    ItemStack stack = new ItemStack(item);
 
-                                String when = caseObj.get("when").getAsString();
-                                stack.set(DataComponents.CUSTOM_NAME, Component.literal(when));
+                                    String when = caseObj.get("when").getAsString();
+                                    stack.set(DataComponents.CUSTOM_NAME, Component.literal(when));
 
-                                CompoundTag compound = new CompoundTag();
-                                compound.putBoolean("model_browser_data", true);
-                                stack.set(DataComponents.CUSTOM_DATA, CustomData.of(compound));
+                                    CompoundTag compound = new CompoundTag();
+                                    compound.putBoolean("model_browser_data", true);
+                                    stack.set(DataComponents.CUSTOM_DATA, CustomData.of(compound));
 
-                                stacks.add(stack);
+                                    stacks.add(stack);
+                                }
                             }
                         }
                     }
                     if (namespace.equals("minecraft")) continue;
                     
                     // Legacy item model definition
-                    String path = resourceId.getPath();
-                    if (!path.startsWith("items/") || !path.endsWith(".json")) continue;
+                    if (ModConfig.INSTANCE.showItemModelDefinitionItems) {
+                        String path = resourceId.getPath();
+                        if (!path.startsWith("items/") || !path.endsWith(".json")) continue;
 
-                    String itemId = path.substring("items/".length(), path.length() - ".json".length());
-                    Identifier itemIdentifier = Identifier.tryParse(namespace + ":" + itemId);
-                    if (itemIdentifier == null) continue;
+                        String itemId = path.substring("items/".length(), path.length() - ".json".length());
+                        Identifier itemIdentifier = Identifier.tryParse(namespace + ":" + itemId);
+                        if (itemIdentifier == null) continue;
 
-                    ItemStack stack = new ItemStack(Items.IRON_NUGGET);
-                    stack.set(DataComponents.ITEM_MODEL, itemIdentifier);
-                    stack.set(DataComponents.ITEM_NAME, Component.literal(itemIdentifier.toString()));
-                    
-                    Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
-                    stack.set(DataComponents.EQUIPPABLE, equippable);
+                        ItemStack stack = new ItemStack(Items.IRON_NUGGET);
+                        stack.set(DataComponents.ITEM_MODEL, itemIdentifier);
+                        stack.set(DataComponents.ITEM_NAME, Component.literal(itemIdentifier.toString()));
+                        
+                        Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
+                        stack.set(DataComponents.EQUIPPABLE, equippable);
 
-                    CompoundTag compound = new CompoundTag();
-                    compound.putBoolean("model_browser_data", true);
-                    CustomData customData = CustomData.of(compound);
-                    stack.set(DataComponents.CUSTOM_DATA, customData);
+                        CompoundTag compound = new CompoundTag();
+                        compound.putBoolean("model_browser_data", true);
+                        CustomData customData = CustomData.of(compound);
+                        stack.set(DataComponents.CUSTOM_DATA, customData);
 
-                    stacks.add(stack);
+                        stacks.add(stack);
+                    }
                 }
             }
                 
