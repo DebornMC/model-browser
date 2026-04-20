@@ -17,7 +17,6 @@ public class ModelBrowserReloadListener implements ResourceManagerReloadListener
         if (Minecraft.getInstance().level == null)
             return;
         ModelListLoader.loadAsync();
-        ModelBrowser.LOGGER.info("Reloaded!");
 
         if (firstReload) {
             firstReload = false;

@@ -1,5 +1,6 @@
 package deborn.modelbrowser.config;
 
+import deborn.modelbrowser.ModelListLoader;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
@@ -32,6 +33,7 @@ public class AutoConfigIntegration implements ConfigData {
 		ModConfig.INSTANCE.showAnvilScreenTab = config.showAnvilScreenTab;
 		ModConfig.INSTANCE.showItemModelDefinitionItems = config.showItemModelDefinitionItems;
 		ModConfig.INSTANCE.showRenameableItems = config.showRenameableItems;
+		ModelListLoader.loadAsync();
 	}
 
 	@ConfigEntry.Gui.Excluded
