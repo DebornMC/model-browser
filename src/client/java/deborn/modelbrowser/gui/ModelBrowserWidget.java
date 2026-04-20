@@ -123,7 +123,7 @@ public class ModelBrowserWidget {
         prevPageButton.visible = false;
         nextPageButton.visible = false;
 
-        // filterModelStacks("");
+        filterModelStacks("");
     }
 
     private void updateSearchRect() {
@@ -242,8 +242,8 @@ public class ModelBrowserWidget {
     }
 
     public void filterModelStacks(String text) {
-        if (text.equals(lastSearch))
-            return;
+        // if (text.equals(lastSearch))
+        //     return;
         lastSearch = text;
 
         ModelListData.filter(text);
