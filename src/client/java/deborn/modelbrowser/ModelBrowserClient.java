@@ -5,13 +5,13 @@ import deborn.modelbrowser.creative.CreativeScreenManager;
 import deborn.modelbrowser.creative.ModelCreativeTab;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.resource.featuretoggle.FeatureFlags;
-import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraft.world.flag.FeatureFlags;
 
 public class ModelBrowserClient implements ClientModInitializer {
-    public static FeatureSet enabledFeatures = FeatureFlags.FEATURE_MANAGER.getFeatureSet();
+    public static FeatureFlagSet enabledFeatures = FeatureFlags.REGISTRY.allFlags();
     @Override
     public void onInitializeClient() {
         if (FabricLoader.getInstance().isModLoaded("cloth-config")) {
@@ -21,7 +21,7 @@ public class ModelBrowserClient implements ClientModInitializer {
         ModelCreativeTab.register();
 
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-            if (screen instanceof CreativeInventoryScreen creativeScreen) {
+            if (screen instanceof CreativeModeInventoryScreen creativeScreen) {
                 CreativeScreenManager.onCreativeScreenOpened(creativeScreen);
             }
         });
