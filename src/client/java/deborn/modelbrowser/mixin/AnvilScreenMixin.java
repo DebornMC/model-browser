@@ -11,7 +11,7 @@ import deborn.modelbrowser.ModelBrowser;
 import deborn.modelbrowser.config.ModConfig;
 import deborn.modelbrowser.gui.ModelBrowserWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.WidgetSprites;
@@ -33,18 +33,18 @@ public abstract class AnvilScreenMixin extends Screen {
     private static final WidgetSprites RECIPE_BUTTON_TEXTURES = new WidgetSprites(
             Identifier.withDefaultNamespace("icon/search"));
     private static final int UI_SHIFT_AMOUNT = 77;
-    
+
     protected AnvilScreenMixin(Component title) {
         super(title);
     }
 
     private int getTop() {
-		return (this.height - 166) / 2;
-	}
+        return (this.height - 166) / 2;
+    }
 
-	private int getLeft() {
-		return (this.width - 176) / 2;
-	}
+    private int getLeft() {
+        return (this.width - 176) / 2;
+    }
 
     @Shadow
     protected abstract void subInit();
@@ -71,10 +71,12 @@ public abstract class AnvilScreenMixin extends Screen {
             shiftUI();
         }
     }
+
     private void toggleModelBrowser() {
         modelBrowserWidget.toggle();
         shiftUI();
     }
+
     private void shiftUI() {
         int dir = modelBrowserWidget.isOpen() ? UI_SHIFT_AMOUNT : -UI_SHIFT_AMOUNT;
         HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
@@ -85,7 +87,8 @@ public abstract class AnvilScreenMixin extends Screen {
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void interceptKeys(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
-        if (!modelBrowserWidget.isOpen()) return;
+        if (!modelBrowserWidget.isOpen())
+            return;
         if (input.isEscape()) {
             Minecraft client = Minecraft.getInstance();
             if (client != null && client.player != null) {
@@ -100,26 +103,27 @@ public abstract class AnvilScreenMixin extends Screen {
             cir.setReturnValue(true);
         }
     }
-    @Inject(method = "renderBg", at = @At("TAIL"))
-    private void drawShiftedRecipeBook(GuiGraphics ctx, float delta, int mouseX, int mouseY, CallbackInfo ci) {
+
+    @Inject(method = "extractBackground", at = @At("TAIL"))
+    private void drawShiftedRecipeBook(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         modelBrowserWidget.drawBackground(ctx);
     }
 
-    @Inject(method = "renderLabels", at = @At("TAIL"))
-    private void drawModelGrid(GuiGraphics ctx, int mouseX, int mouseY, CallbackInfo ci) {
+    @Inject(method = "extractLabels", at = @At("TAIL"))
+    private void drawModelGrid(GuiGraphicsExtractor ctx, int mouseX, int mouseY, CallbackInfo ci) {
         modelBrowserWidget.drawForeground(ctx, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (!modelBrowserWidget.isOpen()) return super.mouseClicked(click, doubled);
+        if (!modelBrowserWidget.isOpen())
+            return super.mouseClicked(click, doubled);
 
         HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
         AbstractContainerMenu handler = acc.getHandler();
 
-        // let the widget deal with all of its own internal UI logic
         if (modelBrowserWidget.handleClick(click, doubled, handler, name, this)) {
-            ModelBrowser.LOGGER.info("Handled mouse click in model browser");
+            // ModelBrowser.LOGGER.info("Handled mouse click in model browser");
             return true;
         }
 
@@ -128,7 +132,8 @@ public abstract class AnvilScreenMixin extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent click) {
-        if (!modelBrowserWidget.isOpen()) return super.mouseReleased(click);
+        if (!modelBrowserWidget.isOpen())
+            return super.mouseReleased(click);
 
         HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
         AbstractContainerMenu handler = acc.getHandler();
@@ -141,8 +146,8 @@ public abstract class AnvilScreenMixin extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics ctx, int mouseX, int mouseY, float deltaTicks) {
-        modelBrowserWidget.render(ctx, mouseX, mouseY, deltaTicks);
-        super.render(ctx, mouseX, mouseY, deltaTicks);
+    public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float deltaTicks) {
+        modelBrowserWidget.extractRenderState(ctx, mouseX, mouseY, deltaTicks);
+        super.extractRenderState(ctx, mouseX, mouseY, deltaTicks);
     }
 }

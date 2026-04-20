@@ -48,12 +48,14 @@ public class ModelBrowserWidget {
             .withDefaultNamespace("textures/gui/recipe_book.png");
     private static final Identifier SLOT_CRAFTABLE_SPRITE = Identifier
             .withDefaultNamespace("textures/gui/sprites/recipe_book/slot_craftable.png");
-    private static final WidgetSprites PAGE_FORWARD_TEXTURES = new WidgetSprites(
+    private static final WidgetSprites PAGE_FORWARD_SPRITES = new WidgetSprites(
             Identifier.withDefaultNamespace("recipe_book/page_forward"),
             Identifier.withDefaultNamespace("recipe_book/page_forward_highlighted"));
-    private static final WidgetSprites PAGE_BACKWARD_TEXTURES = new WidgetSprites(
+    private static final WidgetSprites PAGE_BACKWARD_SPRITES = new WidgetSprites(
             Identifier.withDefaultNamespace("recipe_book/page_backward"),
             Identifier.withDefaultNamespace("recipe_book/page_backward_highlighted"));
+    private static final Component NEXT_PAGE_TEXT = Component.translatable("gui.recipebook.next_page");
+    private static final Component PREVIOUS_PAGE_TEXT = Component.translatable("gui.recipebook.previous_page");
     private static final Component SEARCH_HINT_TEXT = Component.translatable("gui.recipebook.search_hint")
             .withStyle(EditBox.SEARCH_HINT_STYLE);
 
@@ -105,18 +107,18 @@ public class ModelBrowserWidget {
                 pageButtonY,
                 12,
                 17,
-                PAGE_BACKWARD_TEXTURES,
+                PAGE_BACKWARD_SPRITES,
                 b -> previousPage(),
-                Component.empty());
+                PREVIOUS_PAGE_TEXT);
 
         nextPageButton = new ImageButton(
                 pageNextX,
                 pageButtonY,
                 12,
                 17,
-                PAGE_FORWARD_TEXTURES,
+                PAGE_FORWARD_SPRITES,
                 b -> nextPage(),
-                Component.empty());
+                NEXT_PAGE_TEXT);
 
         prevPageButton.visible = false;
         nextPageButton.visible = false;
@@ -159,27 +161,27 @@ public class ModelBrowserWidget {
                     return true; // still consume the click even if no match
                 }
 
-                client.gameMode.handleInventoryMouseClick(
+                client.gameMode.handleContainerInput(
                         handler.containerId,
                         invSlot,
                         0,
                         ContainerInput.PICKUP,
                         client.player);
-                client.gameMode.handleInventoryMouseClick(
+                client.gameMode.handleContainerInput(
                         handler.containerId,
                         invSlot,
                         0,
                         ContainerInput.PICKUP_ALL,
                         client.player);
                 boolean anvilSlotHadItem = handler.getSlot(0).hasItem();
-                client.gameMode.handleInventoryMouseClick(
+                client.gameMode.handleContainerInput(
                         handler.containerId,
                         0,
                         0,
                         ContainerInput.PICKUP,
                         client.player);
                 if (anvilSlotHadItem) {
-                    client.gameMode.handleInventoryMouseClick(
+                    client.gameMode.handleContainerInput(
                             handler.containerId,
                             invSlot,
                             0,
@@ -285,17 +287,17 @@ public class ModelBrowserWidget {
         return null;
     }
 
-    public void render(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float deltaTicks) {
+    public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float deltaTicks) {
         if (this.isOpen()) {
-            prevPageButton.render(ctx, mouseX, mouseY, deltaTicks);
-            nextPageButton.render(ctx, mouseX, mouseY, deltaTicks);
-            searchField.render(ctx, mouseX, mouseY, deltaTicks);
+            prevPageButton.extractRenderState(ctx, mouseX, mouseY, deltaTicks);
+            nextPageButton.extractRenderState(ctx, mouseX, mouseY, deltaTicks);
+            searchField.extractRenderState(ctx, mouseX, mouseY, deltaTicks);
             if (this.pageCount > 1) {
                 Component text = Component.translatable("gui.recipebook.page",
                         new Object[] { this.currentPage + 1, this.pageCount });
                 int x = screenLeft + PAGE_COUNT_POSITION_X - SHIFT_LEFT_AMOUNT;
                 int y = screenTop + PAGE_COUNT_POSITION_Y;
-                ctx.drawString(textRenderer, text, x, y, CommonColors.WHITE);
+                ctx.text(textRenderer, text, x, y, CommonColors.WHITE);
             }
         }
     }
@@ -336,7 +338,7 @@ public class ModelBrowserWidget {
             ctx.blit(RenderPipelines.GUI_TEXTURED, SLOT_CRAFTABLE_SPRITE,
                     x, y, 0, 0, ITEM_SIZE, ITEM_SIZE, ITEM_SIZE, ITEM_SIZE);
 
-            ctx.renderItem(stacks.get(i), x + 4, y + 4);
+            ctx.item(stacks.get(i), x + 4, y + 4);
         }
 
         prevPageButton.visible = currentPage > 0;
