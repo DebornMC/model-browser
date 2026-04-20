@@ -1,28 +1,27 @@
 package deborn.modelbrowser.gui;
 
 import java.util.List;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.WidgetSprites;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.CommonColors;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import deborn.modelbrowser.ModelListData;
 import deborn.modelbrowser.config.ModConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.ScreenRect;
-import net.minecraft.client.gui.screen.ButtonTextures;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Identifier;
 
 public class ModelBrowserWidget {
     // UI Layout Constants
@@ -45,17 +44,17 @@ public class ModelBrowserWidget {
     private static final int SEARCH_BOX_POSITION_Y = 13;
 
     // Textures and Sprites
-    private static final Identifier RECIPE_BOOK_TEXTURE = Identifier.ofVanilla("textures/gui/recipe_book.png");
+    private static final Identifier RECIPE_BOOK_TEXTURE = Identifier.withDefaultNamespace("textures/gui/recipe_book.png");
     private static final Identifier SLOT_CRAFTABLE_SPRITE = Identifier
-            .ofVanilla("textures/gui/sprites/recipe_book/slot_craftable.png");
-    private static final ButtonTextures PAGE_FORWARD_TEXTURES = new ButtonTextures(
-            Identifier.ofVanilla("recipe_book/page_forward"),
-            Identifier.ofVanilla("recipe_book/page_forward_highlighted"));
-    private static final ButtonTextures PAGE_BACKWARD_TEXTURES = new ButtonTextures(
-            Identifier.ofVanilla("recipe_book/page_backward"),
-            Identifier.ofVanilla("recipe_book/page_backward_highlighted"));
-    private static final Text SEARCH_HINT_TEXT = Text.translatable("gui.recipebook.search_hint")
-            .fillStyle(TextFieldWidget.SEARCH_STYLE);
+            .withDefaultNamespace("textures/gui/sprites/recipe_book/slot_craftable.png");
+    private static final WidgetSprites PAGE_FORWARD_TEXTURES = new WidgetSprites(
+            Identifier.withDefaultNamespace("recipe_book/page_forward"),
+            Identifier.withDefaultNamespace("recipe_book/page_forward_highlighted"));
+    private static final WidgetSprites PAGE_BACKWARD_TEXTURES = new WidgetSprites(
+            Identifier.withDefaultNamespace("recipe_book/page_backward"),
+            Identifier.withDefaultNamespace("recipe_book/page_backward_highlighted"));
+    private static final Component SEARCH_HINT_TEXT = Component.translatable("gui.recipebook.search_hint")
+            .withStyle(EditBox.SEARCH_HINT_STYLE);
 
     // State
     private String lastSearch = "";
@@ -63,22 +62,22 @@ public class ModelBrowserWidget {
     private int currentPage = 0;
 
     // UI Components
-    private TextFieldWidget searchField;
-    private ScreenRect searchFieldRect;
-    private TexturedButtonWidget nextPageButton;
-    private TexturedButtonWidget prevPageButton;
+    private EditBox searchField;
+    private ScreenRectangle searchFieldRect;
+    private ImageButton nextPageButton;
+    private ImageButton prevPageButton;
 
     // References
-    private final MinecraftClient client;
+    private final Minecraft client;
     private int screenLeft;
     private int screenTop;
     private int screenWidth;
     private int screenHeight;
-    private TextRenderer textRenderer;
+    private Font textRenderer;
 
-    public ModelBrowserWidget(MinecraftClient client, int screenWidth, int screenHeight) {
+    public ModelBrowserWidget(Minecraft client, int screenWidth, int screenHeight) {
         this.client = client;
-        this.textRenderer = client.textRenderer;
+        this.textRenderer = client.font;
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
         this.screenLeft = (screenWidth - 176) / 2;
@@ -89,10 +88,10 @@ public class ModelBrowserWidget {
         int searchX = screenLeft + SEARCH_BOX_POSITION_X - SHIFT_LEFT_AMOUNT;
         int searchY = screenTop + SEARCH_BOX_POSITION_Y;
 
-        searchField = new TextFieldWidget(textRenderer, searchX, searchY, 109, 14, Text.translatable("itemGroup.search"));
+        searchField = new EditBox(textRenderer, searchX, searchY, 109, 14, Component.translatable("itemGroup.search"));
         searchField.setMaxLength(50);
-        searchField.setChangedListener(this::filterModelStacks);
-        searchField.setPlaceholder(SEARCH_HINT_TEXT);
+        searchField.setResponder(this::filterModelStacks);
+        searchField.setHint(SEARCH_HINT_TEXT);
         searchField.visible = ModConfig.INSTANCE.isModelBrowserOpen;
         updateSearchRect();
 
@@ -100,24 +99,24 @@ public class ModelBrowserWidget {
         int pageNextX = screenLeft + NEXT_PAGE_POSITION_X - SHIFT_LEFT_AMOUNT;
         int pageButtonY = screenTop + PAGE_BUTTONS_POSITION_Y;
 
-        prevPageButton = new TexturedButtonWidget(
+        prevPageButton = new ImageButton(
             pagePrevX,
             pageButtonY,
             12,
             17,
             PAGE_BACKWARD_TEXTURES,
             b -> previousPage(),
-            Text.empty()
+            Component.empty()
         );
 
-        nextPageButton = new TexturedButtonWidget(
+        nextPageButton = new ImageButton(
             pageNextX,
             pageButtonY,
             12,
             17,
             PAGE_FORWARD_TEXTURES,
             b -> nextPage(),
-            Text.empty()
+            Component.empty()
         );
 
         prevPageButton.visible = false;
@@ -127,7 +126,7 @@ public class ModelBrowserWidget {
     }
 
     private void updateSearchRect() {
-        searchFieldRect = new ScreenRect(
+        searchFieldRect = new ScreenRectangle(
             searchField.getX() - 17,
             searchField.getY(),
             searchField.getWidth() + 17,
@@ -142,7 +141,7 @@ public class ModelBrowserWidget {
         searchField.active = ModConfig.INSTANCE.isModelBrowserOpen;
     }
 
-    public boolean handleClick(Click click, boolean doubled, ScreenHandler handler, TextFieldWidget nameField, Screen screen) {
+    public boolean handleClick(MouseButtonEvent click, boolean doubled, AbstractContainerMenu handler, EditBox nameField, Screen screen) {
         if (prevPageButton.mouseClicked(click, doubled)) {
             return true;
         }
@@ -152,63 +151,63 @@ public class ModelBrowserWidget {
 
         ItemStack clickedStack = getItemAtMouse((int) click.x(), (int) click.y());
         if (clickedStack != null) {
-            Text name = clickedStack.get(DataComponentTypes.CUSTOM_NAME);
-            Identifier modelId = clickedStack.get(DataComponentTypes.ITEM_MODEL);
+            Component name = clickedStack.get(DataComponents.CUSTOM_NAME);
+            Identifier modelId = clickedStack.get(DataComponents.ITEM_MODEL);
             if (name != null) {
-                ClickableWidget.playClickSound(client.getSoundManager());
+                AbstractWidget.playButtonClickSound(client.getSoundManager());
                 int invSlot = findMatchingInventorySlot(handler, clickedStack);
                 if (invSlot == -1) {
                     return true; // still consume the click even if no match
                 }
 
-                client.interactionManager.clickSlot(
-                        handler.syncId,
+                client.gameMode.handleInventoryMouseClick(
+                        handler.containerId,
                         invSlot,
                         0,
-                        SlotActionType.PICKUP,
+                        ClickType.PICKUP,
                         client.player
                 );
-                client.interactionManager.clickSlot(
-                        handler.syncId,
+                client.gameMode.handleInventoryMouseClick(
+                        handler.containerId,
                         invSlot,
                         0,
-                        SlotActionType.PICKUP_ALL,
+                        ClickType.PICKUP_ALL,
                         client.player
                 );
-                boolean anvilSlotHadItem = handler.getSlot(0).hasStack();
-                client.interactionManager.clickSlot(
-                        handler.syncId,
+                boolean anvilSlotHadItem = handler.getSlot(0).hasItem();
+                client.gameMode.handleInventoryMouseClick(
+                        handler.containerId,
                         0,
                         0,
-                        SlotActionType.PICKUP,
+                        ClickType.PICKUP,
                         client.player
                 );
                 if (anvilSlotHadItem) {
-                    client.interactionManager.clickSlot(
-                            handler.syncId,
+                    client.gameMode.handleInventoryMouseClick(
+                            handler.containerId,
                             invSlot,
                             0,
-                            SlotActionType.PICKUP,
+                            ClickType.PICKUP,
                             client.player
                     );
                 }
 
-                nameField.setText("");
-                nameField.setText(name.getString());
+                nameField.setValue("");
+                nameField.setValue(name.getString());
 
                 return true;
             } else if (modelId != null) {
-                ClickableWidget.playClickSound(client.getSoundManager());
-                if (handler.getSlot(0).hasStack()) {
-                    nameField.setText("");  
-                    nameField.setText(modelId.toString());
+                AbstractWidget.playButtonClickSound(client.getSoundManager());
+                if (handler.getSlot(0).hasItem()) {
+                    nameField.setValue("");  
+                    nameField.setValue(modelId.toString());
                     return true;
                 }
             }
         }
 
         if (searchField != null) {
-            boolean bl = searchFieldRect != null && searchFieldRect.contains((int) click.x(), (int) click.y());
+            boolean bl = searchFieldRect != null && searchFieldRect.containsPoint((int) click.x(), (int) click.y());
             if (bl) {
                 screen.setFocused(searchField);
                 searchField.setFocused(true);
@@ -225,7 +224,7 @@ public class ModelBrowserWidget {
         return false;
     }
 
-    public boolean handleRelease(Click click) {
+    public boolean handleRelease(MouseButtonEvent click) {
         return isClickInWidgetBounds((int) click.x(), (int) click.y());
     }
 
@@ -235,10 +234,10 @@ public class ModelBrowserWidget {
         return mouseX >= x && mouseX < x + 147 && mouseY >= y && mouseY < y + 166;
     }
 
-    private int findMatchingInventorySlot(ScreenHandler handler, ItemStack target) {
+    private int findMatchingInventorySlot(AbstractContainerMenu handler, ItemStack target) {
         for (int i = 0; i < handler.slots.size(); i++) {
             Slot slot = handler.getSlot(i);
-            if (slot.hasStack() && ItemStack.areItemsEqual(slot.getStack(), target)) {
+            if (slot.hasItem() && ItemStack.isSameItem(slot.getItem(), target)) {
                 return i;
             }
         }
@@ -287,31 +286,31 @@ public class ModelBrowserWidget {
         return null;
     }
 
-    public void render(DrawContext ctx, int mouseX, int mouseY, float deltaTicks) {
+    public void render(GuiGraphics ctx, int mouseX, int mouseY, float deltaTicks) {
         if (this.isOpen()) {
             prevPageButton.render(ctx, mouseX, mouseY, deltaTicks);
             nextPageButton.render(ctx, mouseX, mouseY, deltaTicks);
             searchField.render(ctx, mouseX, mouseY, deltaTicks);
             if (this.pageCount > 1) {
-                Text text = Text.translatable("gui.recipebook.page", new Object[]{this.currentPage + 1, this.pageCount});
+                Component text = Component.translatable("gui.recipebook.page", new Object[]{this.currentPage + 1, this.pageCount});
                 int x = screenLeft + PAGE_COUNT_POSITION_X - SHIFT_LEFT_AMOUNT;
                 int y = screenTop + PAGE_COUNT_POSITION_Y;
-                ctx.drawTextWithShadow(textRenderer, text, x, y, Colors.WHITE);
+                ctx.drawString(textRenderer, text, x, y, CommonColors.WHITE);
             }
         }
     }
 
-    public void drawBackground(DrawContext ctx) {
+    public void drawBackground(GuiGraphics ctx) {
         if (!this.isOpen()) return;
 
         int x = screenLeft - SHIFT_LEFT_AMOUNT;
         int y = screenTop;
 
-        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, RECIPE_BOOK_TEXTURE, x, y,
+        ctx.blit(RenderPipelines.GUI_TEXTURED, RECIPE_BOOK_TEXTURE, x, y,
                 1.0F, 1.0F, 147, 166, 256, 256);
     }
 
-    public void drawForeground(DrawContext ctx, int mouseX, int mouseY) {
+    public void drawForeground(GuiGraphics ctx, int mouseX, int mouseY) {
         if (!this.isOpen()) return;
 
         List<ItemStack> stacks = ModelListData.getFiltered();
@@ -332,10 +331,10 @@ public class ModelBrowserWidget {
             int x = GRID_POSITION_X + col * ITEM_SIZE - SHIFT_LEFT_AMOUNT - 77;
             int y = GRID_POSITION_Y + row * ITEM_SIZE;
 
-            ctx.drawTexture(RenderPipelines.GUI_TEXTURED, SLOT_CRAFTABLE_SPRITE,
+            ctx.blit(RenderPipelines.GUI_TEXTURED, SLOT_CRAFTABLE_SPRITE,
                     x, y, 0, 0, ITEM_SIZE, ITEM_SIZE, ITEM_SIZE, ITEM_SIZE);
 
-            ctx.drawItem(stacks.get(i), x + 4, y + 4);
+            ctx.renderItem(stacks.get(i), x + 4, y + 4);
         }
 
         prevPageButton.visible = currentPage > 0;
@@ -343,29 +342,29 @@ public class ModelBrowserWidget {
 
         ItemStack hovered = getItemAtMouse(mouseX, mouseY);
         if (hovered != null) {
-            Text name = hovered.get(DataComponentTypes.CUSTOM_NAME);
-            Identifier modelId = hovered.get(DataComponentTypes.ITEM_MODEL);
+            Component name = hovered.get(DataComponents.CUSTOM_NAME);
+            Identifier modelId = hovered.get(DataComponents.ITEM_MODEL);
             if (name != null) {
-                ctx.drawTooltip(textRenderer, name, mouseX, mouseY);
+                ctx.setTooltipForNextFrame(textRenderer, name, mouseX, mouseY);
             } else if (modelId != null) {
-                ctx.drawTooltip(textRenderer, Text.literal(modelId.toString()), mouseX, mouseY);
+                ctx.setTooltipForNextFrame(textRenderer, Component.literal(modelId.toString()), mouseX, mouseY);
             }
         }
     }
 
-    public TextFieldWidget getSearchField() {
+    public EditBox getSearchField() {
         return searchField;
     }
 
-    public ScreenRect getSearchFieldRect() {
+    public ScreenRectangle getSearchFieldRect() {
         return searchFieldRect;
     }
 
-    public TexturedButtonWidget getNextPageButton() {
+    public ImageButton getNextPageButton() {
         return nextPageButton;
     }
 
-    public TexturedButtonWidget getPrevPageButton() {
+    public ImageButton getPrevPageButton() {
         return prevPageButton;
     }
 

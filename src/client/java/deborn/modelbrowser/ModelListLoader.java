@@ -4,46 +4,44 @@ import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.equipment.Equippable;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.EquippableComponent;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class ModelListLoader {
     
     public List<ItemStack> allModelStacks = new ArrayList<>();
     public static void loadAsync() {
-        new Thread(() -> loadModels(MinecraftClient.getInstance().getResourceManager())).start();
+        new Thread(() -> loadModels(Minecraft.getInstance().getResourceManager())).start();
     }
     
     private static void loadModels(ResourceManager manager) {
         List<ItemStack> stacks = new ArrayList<>();
 
         try {
-            for (String namespace : manager.getAllNamespaces()) {
-                Map<Identifier, Resource> resources = manager.findResources("items", path -> path.getPath().endsWith(".json"));
+            for (String namespace : manager.getNamespaces()) {
+                Map<Identifier, Resource> resources = manager.listResources("items", path -> path.getPath().endsWith(".json"));
 
                 for (Identifier resourceId : resources.keySet()) {
                     if (!resourceId.getNamespace().equals(namespace)) continue;
                     Resource resource = resources.get(resourceId);
 
                     JsonElement element;
-                    try (BufferedReader reader = resource.getReader()) {
+                    try (BufferedReader reader = resource.openAsReader()) {
                         element = JsonParser.parseReader(reader);
                     }
 
@@ -75,15 +73,15 @@ public class ModelListLoader {
                                 JsonObject caseObj = caseEl.getAsJsonObject();
                                 if (!caseObj.has("when")) continue;
 
-                                Item item = Registries.ITEM.get(itemIdentifier);
+                                Item item = BuiltInRegistries.ITEM.getValue(itemIdentifier);
                                 ItemStack stack = new ItemStack(item);
 
                                 String when = caseObj.get("when").getAsString();
-                                stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(when));
+                                stack.set(DataComponents.CUSTOM_NAME, Component.literal(when));
 
-                                NbtCompound compound = new NbtCompound();
+                                CompoundTag compound = new CompoundTag();
                                 compound.putBoolean("model_browser_data", true);
-                                stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(compound));
+                                stack.set(DataComponents.CUSTOM_DATA, CustomData.of(compound));
 
                                 stacks.add(stack);
                             }
@@ -100,16 +98,16 @@ public class ModelListLoader {
                     if (itemIdentifier == null) continue;
 
                     ItemStack stack = new ItemStack(Items.IRON_NUGGET);
-                    stack.set(DataComponentTypes.ITEM_MODEL, itemIdentifier);
-                    stack.set(DataComponentTypes.ITEM_NAME, Text.literal(itemIdentifier.toString()));
+                    stack.set(DataComponents.ITEM_MODEL, itemIdentifier);
+                    stack.set(DataComponents.ITEM_NAME, Component.literal(itemIdentifier.toString()));
                     
-                    EquippableComponent equippable = EquippableComponent.builder(EquipmentSlot.HEAD).build();
-                    stack.set(DataComponentTypes.EQUIPPABLE, equippable);
+                    Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
+                    stack.set(DataComponents.EQUIPPABLE, equippable);
 
-                    NbtCompound compound = new NbtCompound();
+                    CompoundTag compound = new CompoundTag();
                     compound.putBoolean("model_browser_data", true);
-                    NbtComponent customData = NbtComponent.of(compound);
-                    stack.set(DataComponentTypes.CUSTOM_DATA, customData);
+                    CustomData customData = CustomData.of(compound);
+                    stack.set(DataComponents.CUSTOM_DATA, customData);
 
                     stacks.add(stack);
                 }
@@ -117,7 +115,7 @@ public class ModelListLoader {
                 
             
             ModelBrowser.LOGGER.info("Loaded " + stacks.size() + " models");
-                MinecraftClient.getInstance().execute(() -> {
+                Minecraft.getInstance().execute(() -> {
                     ModelListData.setStacks(stacks);
                 });
         } catch (Exception e) {

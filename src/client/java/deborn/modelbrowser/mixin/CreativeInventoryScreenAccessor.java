@@ -1,12 +1,11 @@
 package deborn.modelbrowser.mixin;
 
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(CreativeInventoryScreen.class)
+@Mixin(CreativeModeInventoryScreen.class)
 public interface CreativeInventoryScreenAccessor {
-    @Accessor("operatorTabEnabled")
+    @Accessor("displayOperatorCreativeTab")
     boolean hasOperatorTabs();
 }
