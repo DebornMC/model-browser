@@ -32,9 +32,9 @@ public class CreativeScreenManager {
         LocalPlayer player = client.player;
         if (player == null) return;
         
-        client.setScreen(null);
+        client.gui.setScreen(null);
         boolean operatorTabEnabled = ((CreativeInventoryScreenAccessor) screen).hasOperatorTabs();
         screen = new CreativeModeInventoryScreen(player, ModelBrowserClient.enabledFeatures, operatorTabEnabled);
-        client.setScreen(screen);
+        client.gui.setScreen(screen);
     }
 }
