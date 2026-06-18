@@ -10,19 +10,13 @@ import java.util.Objects;
 
 public class ModelBrowserReloadListener implements ResourceManagerReloadListener {
     public static final Identifier ID = Identifier.fromNamespaceAndPath("modelbrowser", "model_reload");
-    private boolean firstReload = true;
 
     @Override
     public void onResourceManagerReload(ResourceManager manager) {
         if (Minecraft.getInstance().level == null)
             return;
         ModelListLoader.loadAsync();
-
-        if (firstReload) {
-            firstReload = false;
-        } else {
-            CreativeScreenManager.markRefreshPending();
-        }
+        CreativeScreenManager.markRefreshPending();
     }
 
     public static void register() {

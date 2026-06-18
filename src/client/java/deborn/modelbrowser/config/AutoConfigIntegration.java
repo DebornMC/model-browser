@@ -6,6 +6,7 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionResult;
 
 @Config(name = "modelbrowser")
@@ -33,7 +34,11 @@ public class AutoConfigIntegration implements ConfigData {
 		ModConfig.INSTANCE.showAnvilScreenTab = config.showAnvilScreenTab;
 		ModConfig.INSTANCE.showItemModelDefinitionItems = config.showItemModelDefinitionItems;
 		ModConfig.INSTANCE.showRenameableItems = config.showRenameableItems;
-		ModelListLoader.loadAsync();
+		
+		Minecraft client = Minecraft.getInstance();
+		if (client.level != null) {
+			ModelListLoader.loadAsync();
+		}
 	}
 
 	@ConfigEntry.Gui.Excluded
