@@ -1,5 +1,6 @@
 package deborn.modelbrowser.mixin;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,9 +34,12 @@ public abstract class AnvilScreenHandlerMixin {
 
     @Unique private Identifier pendingModelId = null;
     @Unique private Component savedCustomName = null;
+    @Unique private boolean flagEquippable = false;
+    @Unique private boolean flagRemoveGlint = false;
 
-
-    private static final Pattern MODEL_ID_PATTERN = Pattern.compile("^[a-z0-9_.-]+:[a-z0-9_/.-]+$");
+    // "namespace:path" optionally followed by whitespace and flag letters, e.g. "modid:foo/bar -ge"
+    private static final Pattern MODEL_ID_PATTERN =
+        Pattern.compile("^([a-z0-9_.-]+:[a-z0-9_/.-]+)(?:\\s+-([a-z]+))?$");
 
     @Inject(method = "validateName", at = @At("HEAD"), cancellable = true)
     private static void modelbrowser$validateName(String name, CallbackInfoReturnable<String> cir) {
@@ -57,36 +61,52 @@ public abstract class AnvilScreenHandlerMixin {
         cir.setReturnValue(null);
     }
 
-    @Inject(method = "setItemName", at = @At("HEAD"))
+    @Inject(method = "setItemName", at = @At("HEAD"), cancellable = true)
     private void interceptRename(String newName, CallbackInfoReturnable<Boolean> cir) {
-        if (newName == null) return;
-
-        newName = validateName(newName);
         if (newName == null) {
-            this.pendingModelId = null;
-            this.savedCustomName = null;
+            cir.setReturnValue(false);
             return;
         }
 
-        if (newName.matches("^[a-z0-9_.-]+:[a-z0-9_/.-]+$")) {
-            Identifier id = Identifier.tryParse(newName);
-            if (id != null) {
-                this.pendingModelId = id;
+        String validated = validateName(newName);
 
-                Slot inputSlot = ((AnvilMenu)(Object)this).getSlot(0);
-                if (inputSlot.hasItem()) {
-                    ItemStack in = inputSlot.getItem();
-                    if (in.get(DataComponents.CUSTOM_NAME) == null) {
-                        this.savedCustomName = null;
-                    } else {
-                        this.savedCustomName = in.get(DataComponents.CUSTOM_NAME);
+        this.pendingModelId = null;
+        this.savedCustomName = null;
+        this.flagEquippable = false;
+        this.flagRemoveGlint = false;
+
+        if (validated != null) {
+            Matcher matcher = MODEL_ID_PATTERN.matcher(validated);
+            if (matcher.matches()) {
+                String idPart = matcher.group(1);
+                String flagsPart = matcher.group(2);
+                Identifier id = Identifier.tryParse(idPart);
+                if (id != null) {
+                    this.pendingModelId = id;
+                    if (flagsPart != null) {
+                        for (int i = 0; i < flagsPart.length(); i++) {
+                            char c = flagsPart.charAt(i);
+                            if (c == 'e') this.flagEquippable = true;
+                            if (c == 'g') this.flagRemoveGlint = true;
+                        }
+                    }
+                    Slot inputSlot = ((AnvilMenu)(Object)this).getSlot(0);
+                    if (inputSlot.hasItem()) {
+                        this.savedCustomName = inputSlot.getItem().get(DataComponents.CUSTOM_NAME);
                     }
                 }
             }
-        } else {
-            this.pendingModelId = null;
-            this.savedCustomName = null;
         }
+
+        boolean changed = validated != null && !validated.equals(this.itemName);
+        if (changed) {
+            this.itemName = validated;
+        }
+
+        // always recompute, so a reset pendingModelId always takes effect immediately
+        ((AnvilMenu)(Object)this).createResult();
+
+        cir.setReturnValue(changed);
     }
 
     @Shadow
@@ -98,7 +118,7 @@ public abstract class AnvilScreenHandlerMixin {
     private void afterUpdateResult(CallbackInfo ci) {
         AnvilMenu self = (AnvilMenu)(Object)this;
         Identifier id = this.pendingModelId;
-        if (id == null) return;                                                                                                                                                                              
+        if (id == null) return;
 
         Slot output = self.getSlot(2);
         if (!output.hasItem()) return;
@@ -114,20 +134,22 @@ public abstract class AnvilScreenHandlerMixin {
             out.remove(DataComponents.CUSTOM_NAME);
         }
 
-        // make equippable
+        // make equippable (only if -e flag was given)
+        if (this.flagEquippable) {
         Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
-        if (out.get(DataComponents.EQUIPPABLE) == null)
-            out.set(DataComponents.EQUIPPABLE, equippable);
+        out.set(DataComponents.EQUIPPABLE, equippable);
+        }
 
-        // remove glint
-        out.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
-        
+        // remove glint (only if -g flag was given)
+        if (this.flagRemoveGlint) {
+            out.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+        }
+
         // custom data
         CompoundTag compound = new CompoundTag();
         compound.putBoolean("model_browser_data", true);
         CustomData customData = CustomData.of(compound);
         out.set(DataComponents.CUSTOM_DATA, customData);
-
 
         output.setByPlayer(out.copy());
     }
@@ -135,20 +157,20 @@ public abstract class AnvilScreenHandlerMixin {
     @Inject(method = "createResult", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/StringUtil;isBlank(Ljava/lang/String;)Z"))
     private void resetItemModel(
         CallbackInfo ci,
-        @Local(ordinal = 0) LocalIntRef i, 
-        @Local(ordinal = 1) LocalIntRef j, 
-        @Local(ordinal = 0) LocalRef<ItemStack> itemStack, 
+        @Local(ordinal = 0) LocalIntRef i,
+        @Local(ordinal = 1) LocalIntRef j,
+        @Local(ordinal = 0) LocalRef<ItemStack> itemStack,
         @Local(ordinal = 1) LocalRef<ItemStack> itemStack2
     ) {
-        if(!itemStack.get().has(DataComponents.CUSTOM_DATA)) return;
+        if (!itemStack.get().has(DataComponents.CUSTOM_DATA)) return;
         CustomData customDataComp = itemStack.get().get(DataComponents.CUSTOM_DATA);
         if (customDataComp == null) return;
         CompoundTag tag = customDataComp.copyTag();
-        if(!tag.getBooleanOr("model_browser", false)) {
+        if (!tag.getBooleanOr("model_browser", false)) {
             if (StringUtil.isBlank(this.itemName) || this.itemName == null) {
                 if (!itemStack.get().has(DataComponents.CUSTOM_NAME)) {
                     j.set(1);
-                    i.set(j.get()+i.get());
+                    i.set(j.get() + i.get());
                 }
                 tag.remove("model_browser_data");
                 if (tag.isEmpty()) {
