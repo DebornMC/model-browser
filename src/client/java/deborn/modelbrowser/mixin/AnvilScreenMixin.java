@@ -50,6 +50,10 @@ public abstract class AnvilScreenMixin extends Screen {
     protected abstract void subInit();
 
     @Inject(method = "subInit", at = @At("TAIL"))
+    private void setMaxLength(CallbackInfo ci) {
+        this.name.setMaxLength(1024);
+    }
+    @Inject(method = "subInit", at = @At("TAIL"))
     private void setupUI(CallbackInfo ci) {
         if (ModConfig.INSTANCE != null && !ModConfig.INSTANCE.showAnvilScreenTab) {
             return;

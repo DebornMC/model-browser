@@ -1,10 +1,14 @@
 package deborn.modelbrowser.mixin;
 
+import java.util.regex.Pattern;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -32,11 +36,39 @@ public abstract class AnvilScreenHandlerMixin {
     @Unique private Identifier pendingModelId = null;
     @Unique private Component savedCustomName = null;
 
+
+    private static final Pattern MODEL_ID_PATTERN = Pattern.compile("^[a-z0-9_.-]+:[a-z0-9_/.-]+$");
+
+    @Inject(method = "validateName", at = @At("HEAD"), cancellable = true)
+    private static void modelbrowser$validateName(String name, CallbackInfoReturnable<String> cir) {
+        if (name == null) {
+            cir.setReturnValue(null);
+            return;
+        }
+        String filteredName = StringUtil.filterText(name);
+        if (filteredName.length() <= 50) {
+            cir.setReturnValue(filteredName);
+            return;
+        }
+
+        if (filteredName.length() <= 1000 && MODEL_ID_PATTERN.matcher(filteredName).matches()) {
+            cir.setReturnValue(filteredName);
+            return;
+        }
+
+        cir.setReturnValue(null);
+    }
+
     @Inject(method = "setItemName", at = @At("HEAD"))
     private void interceptRename(String newName, CallbackInfoReturnable<Boolean> cir) {
         if (newName == null) return;
 
         newName = validateName(newName);
+        if (newName == null) {
+            this.pendingModelId = null;
+            this.savedCustomName = null;
+            return;
+        }
 
         if (newName.matches("^[a-z0-9_.-]+:[a-z0-9_/.-]+$")) {
             Identifier id = Identifier.tryParse(newName);

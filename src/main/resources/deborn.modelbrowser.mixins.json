@@ -1,7 +1,7 @@
 {
 	"required": true,
 	"package": "deborn.modelbrowser.mixin",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_25",
 	"mixinextras": {"minVersion": "0.5.0"},
 	"mixins": [
 		"AnvilScreenHandlerMixin"
