@@ -8,5 +8,5 @@ public class ModConfig {
     public boolean showAnvilScreenTab = true;
     public boolean isModelBrowserOpen = false;
     public boolean showItemModelDefinitionItems = true;
-    public boolean showRenameableItems = true;
+    public boolean showRenameableItems = false;
 }
