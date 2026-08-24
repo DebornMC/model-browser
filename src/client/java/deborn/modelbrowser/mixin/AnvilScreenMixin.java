@@ -7,7 +7,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import deborn.modelbrowser.ModelBrowser;
 import deborn.modelbrowser.config.ModConfig;
 import deborn.modelbrowser.gui.ModelBrowserWidget;
 import net.minecraft.client.Minecraft;
@@ -142,9 +141,6 @@ public abstract class AnvilScreenMixin extends Screen {
     public boolean mouseReleased(MouseButtonEvent click) {
         if (modelBrowserWidget == null || !modelBrowserWidget.isOpen())
             return super.mouseReleased(click);
-
-        HandledScreenAccessor acc = (HandledScreenAccessor) (Object) this;
-        AbstractContainerMenu handler = acc.getHandler();
 
         if (modelBrowserWidget.handleRelease(click)) {
             return true;

@@ -59,12 +59,9 @@ public class ModelBrowserWidget {
     private static final Component SEARCH_HINT_TEXT = Component.translatable("gui.recipebook.search_hint")
             .withStyle(EditBox.SEARCH_HINT_STYLE);
 
-    // State
-    private String lastSearch = "";
     private int pageCount = 0;
     private int currentPage = 0;
 
-    // UI Components
     private EditBox searchField;
     private ScreenRectangle searchFieldRect;
     private ImageButton nextPageButton;
@@ -74,15 +71,11 @@ public class ModelBrowserWidget {
     private final Minecraft client;
     private int screenLeft;
     private int screenTop;
-    private int screenWidth;
-    private int screenHeight;
     private Font textRenderer;
 
     public ModelBrowserWidget(Minecraft client, int screenWidth, int screenHeight) {
         this.client = client;
         this.textRenderer = client.font;
-        this.screenWidth = screenWidth;
-        this.screenHeight = screenHeight;
         this.screenLeft = (screenWidth - 176) / 2;
         this.screenTop = (screenHeight - 166) / 2;
     }
@@ -242,9 +235,7 @@ public class ModelBrowserWidget {
     }
 
     public void filterModelStacks(String text) {
-        // if (text.equals(lastSearch))
-        //     return;
-        lastSearch = text;
+
 
         ModelListData.filter(text);
         currentPage = 0;
