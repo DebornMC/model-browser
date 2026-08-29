@@ -342,9 +342,32 @@ public class ModelBrowserWidget {
             if (name != null) {
                 ctx.setTooltipForNextFrame(textRenderer, name, mouseX, mouseY);
             } else if (modelId != null) {
-                ctx.setTooltipForNextFrame(textRenderer, Component.literal(modelId.toString()), mouseX, mouseY);
+                if (ModConfig.INSTANCE.showFriendlyItemNames) {
+                    ctx.setTooltipForNextFrame(textRenderer, Component.literal(formatModelName(modelId)), mouseX, mouseY);
+                }
+                else {
+                    ctx.setTooltipForNextFrame(textRenderer, Component.literal(modelId.toString()), mouseX, mouseY);
+                }
             }
         }
+    }
+
+    private static String formatModelName(Identifier modelId) {
+        String path = modelId.getPath();
+        int lastSlash = path.lastIndexOf('/');
+        String lastSegment = lastSlash >= 0 ? path.substring(lastSlash + 1) : path;
+
+        String[] words = lastSegment.split("_");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (word.isEmpty()) continue;
+            if (result.length() > 0) result.append(' ');
+            result.append(Character.toUpperCase(word.charAt(0)));
+            if (word.length() > 1) {
+                result.append(word.substring(1));
+            }
+        }
+        return result.toString();
     }
 
     public EditBox getSearchField() {

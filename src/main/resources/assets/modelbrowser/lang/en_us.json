@@ -9,5 +9,7 @@
   "text.autoconfig.modelbrowser.option.showItemModelDefinitionItems": "Show Item Model Definition Items",
   "text.autoconfig.modelbrowser.option.showItemModelDefinitionItems.@Tooltip": "Show items that have an item model defined in a custom namespace",
   "text.autoconfig.modelbrowser.option.showRenameableItems": "Show Renameable Items",
-  "text.autoconfig.modelbrowser.option.showRenameableItems.@Tooltip": "Show items that have an item model on rename in the item model lists [BETA]"
+  "text.autoconfig.modelbrowser.option.showRenameableItems.@Tooltip": "Show items that have an item model on rename in the item model lists [BETA]",
+  "text.autoconfig.modelbrowser.option.showFriendlyItemNames": "Show Friendly Item Names",
+  "text.autoconfig.modelbrowser.option.showFriendlyItemNames.@Tooltip": "Displays model names in a readable format (e.g. \"Grass Block\") instead of their raw identifier (e.g. minecraft:grass_block)"
 }

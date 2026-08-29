@@ -9,4 +9,5 @@ public class ModConfig {
     public boolean isModelBrowserOpen = false;
     public boolean showItemModelDefinitionItems = true;
     public boolean showRenameableItems = false;
+    public boolean showFriendlyItemNames = true;
 }

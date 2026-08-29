@@ -30,7 +30,23 @@ public class ModelListLoader {
     public static void loadAsync() {
         new Thread(() -> loadModels(Minecraft.getInstance().getResourceManager())).start();
     }
-    
+    private static String formatModelName(Identifier modelId) {
+        String path = modelId.getPath();
+        int lastSlash = path.lastIndexOf('/');
+        String lastSegment = lastSlash >= 0 ? path.substring(lastSlash + 1) : path;
+
+        String[] words = lastSegment.split("_");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (word.isEmpty()) continue;
+            if (result.length() > 0) result.append(' ');
+            result.append(Character.toUpperCase(word.charAt(0)));
+            if (word.length() > 1) {
+                result.append(word.substring(1));
+            }
+        }
+        return result.toString();
+    }
     private static void loadModels(ResourceManager manager) {
         List<ItemStack> stacks = new ArrayList<>();
 
@@ -104,8 +120,13 @@ public class ModelListLoader {
 
                         ItemStack stack = new ItemStack(Items.IRON_NUGGET);
                         stack.set(DataComponents.ITEM_MODEL, itemIdentifier);
-                        stack.set(DataComponents.ITEM_NAME, Component.literal(itemIdentifier.toString()));
                         
+                        if (ModConfig.INSTANCE.showFriendlyItemNames) {
+                            stack.set(DataComponents.ITEM_NAME, Component.literal(formatModelName(itemIdentifier)));
+                        } else {
+                            stack.set(DataComponents.ITEM_NAME, Component.literal(itemIdentifier.toString()));
+                        }
+
                         Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
                         stack.set(DataComponents.EQUIPPABLE, equippable);
 

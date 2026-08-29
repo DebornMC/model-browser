@@ -34,6 +34,7 @@ public class AutoConfigIntegration implements ConfigData {
 		ModConfig.INSTANCE.showAnvilScreenTab = config.showAnvilScreenTab;
 		ModConfig.INSTANCE.showItemModelDefinitionItems = config.showItemModelDefinitionItems;
 		ModConfig.INSTANCE.showRenameableItems = config.showRenameableItems;
+		ModConfig.INSTANCE.showFriendlyItemNames = config.showFriendlyItemNames;
 		
 		Minecraft client = Minecraft.getInstance();
 		if (client.level != null) {
@@ -55,4 +56,7 @@ public class AutoConfigIntegration implements ConfigData {
 
 	@ConfigEntry.Gui.Tooltip()
 	public boolean showRenameableItems = DEFAULTS.showRenameableItems;
+
+	@ConfigEntry.Gui.Tooltip()
+	public boolean showFriendlyItemNames = DEFAULTS.showFriendlyItemNames;
 }
