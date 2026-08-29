@@ -130,7 +130,10 @@ public abstract class AnvilScreenHandlerMixin {
         ItemStack out = output.getItem();
         Equippable inputEquippable = self.getSlot(0).getItem().get(DataComponents.EQUIPPABLE);
         boolean inputIsHeadEquippable = inputEquippable != null && inputEquippable.slot() == EquipmentSlot.HEAD;
-
+        boolean inputIsArmorEquippable = inputEquippable != null && switch (inputEquippable.slot()) {
+            case CHEST, LEGS, FEET -> true;
+            default -> false;
+        };
         out.set(DataComponents.ITEM_MODEL, id);
 
         // Restore previous custom_name if there was one, otherwise remove it
@@ -140,13 +143,12 @@ public abstract class AnvilScreenHandlerMixin {
             out.remove(DataComponents.CUSTOM_NAME);
         }
 
-        // if the input is already equippable on head (eg helmets) then always explicitly add the equippable component, 
-        // otherwise the model will show as a helmet
-        if (inputIsHeadEquippable || ServerConfig.itemsAlwaysEquippable || this.flagEquippable) {
+        // if the input is already equippable on head (eg helmets) then always explicitly add the equippable component, otherwise the model will show as a helmet
+        // if the input is already equippable on a different slot, ignore the always equippable flag/config option
+        if ((inputIsHeadEquippable || ServerConfig.itemsAlwaysEquippable || this.flagEquippable) && !inputIsArmorEquippable) {
             Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
             out.set(DataComponents.EQUIPPABLE, equippable);
         }
-
         if (ServerConfig.itemsAlwaysRemoveGlint || this.flagRemoveGlint) {
             out.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
         }
