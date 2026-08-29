@@ -25,6 +25,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.equipment.Equippable;
+import deborn.modelbrowser.config.ServerConfig;
 
 @Mixin(AnvilMenu.class)
 public abstract class AnvilScreenHandlerMixin {
@@ -134,14 +135,14 @@ public abstract class AnvilScreenHandlerMixin {
             out.remove(DataComponents.CUSTOM_NAME);
         }
 
-        // make equippable (only if -e flag was given)
-        if (this.flagEquippable) {
-        Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
-        out.set(DataComponents.EQUIPPABLE, equippable);
+        // make equippable if enabled by config or requested with -e
+        if (ServerConfig.itemsAlwaysEquippable || this.flagEquippable) {
+            Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
+            out.set(DataComponents.EQUIPPABLE, equippable);
         }
 
-        // remove glint (only if -g flag was given)
-        if (this.flagRemoveGlint) {
+        // remove glint if enabled by config or requested with -g
+        if (ServerConfig.itemsAlwaysRemoveGlint || this.flagRemoveGlint) {
             out.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
         }
 
@@ -181,7 +182,7 @@ public abstract class AnvilScreenHandlerMixin {
                 itemStack2.get().set(DataComponents.ITEM_MODEL, itemStack2.get().getItem().getDefaultInstance().get(DataComponents.ITEM_MODEL));
                 itemStack2.get().set(DataComponents.ITEM_NAME, itemStack2.get().getItem().getDefaultInstance().get(DataComponents.ITEM_NAME));
                 itemStack2.get().set(DataComponents.EQUIPPABLE, itemStack2.get().getItem().getDefaultInstance().get(DataComponents.EQUIPPABLE));
-                itemStack2.get().remove(DataComponents.ENCHANTMENT_GLINT_OVERRIDE);
+                itemStack2.get().set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, itemStack2.get().getItem().getDefaultInstance().get(DataComponents.ENCHANTMENT_GLINT_OVERRIDE));
             }
         }
     }

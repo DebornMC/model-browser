@@ -11,6 +11,9 @@
 	"icon": "assets/modelbrowser/icon.png",
 	"environment": "*",
 	"entrypoints": {
+		"main": [
+			"deborn.modelbrowser.ModelBrowser"
+		],
 		"client": [
 			"deborn.modelbrowser.ModelBrowserClient"
 		],

@@ -190,7 +190,7 @@ public class ModelBrowserWidget {
                 AbstractWidget.playButtonClickSound(client.getSoundManager());
                 if (handler.getSlot(0).hasItem()) {
                     nameField.setValue("");
-                    nameField.setValue(modelId.toString() + " -ge");
+                    nameField.setValue(modelId.toString());
                     return true;
                 }
             }
