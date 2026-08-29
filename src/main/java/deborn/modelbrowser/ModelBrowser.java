@@ -28,31 +28,33 @@ public class ModelBrowser implements ModInitializer {
 			dispatcher.register(literal(MOD_ID)
 				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
 				.then(literal("items_always_equippable")
+					.executes(context -> {
+						context.getSource().sendSuccess(() -> Component.translatable(
+							"commands.modelbrowser.gamerule.query", "items_always_equippable", Boolean.toString(ServerConfig.itemsAlwaysEquippable)), false);
+						return 1;
+					})
 					.then(argument("value", BoolArgumentType.bool())
 						.executes(context -> {
 							ServerConfig.itemsAlwaysEquippable = BoolArgumentType.getBool(context, "value");
 							ServerConfig.save();
-							context.getSource().sendSuccess(() -> Component.literal("Model Browser: items are "
-								+ (ServerConfig.itemsAlwaysEquippable ? "now" : "no longer") + " always equippable."), true);
+							context.getSource().sendSuccess(() -> Component.translatable(
+								"commands.modelbrowser.gamerule.set", "items_always_equippable", Boolean.toString(ServerConfig.itemsAlwaysEquippable)), true);
 							return 1;
 						})))
 				.then(literal("items_always_remove_glint")
+					.executes(context -> {
+						context.getSource().sendSuccess(() -> Component.translatable(
+							"commands.modelbrowser.gamerule.query", "items_always_remove_glint", Boolean.toString(ServerConfig.itemsAlwaysRemoveGlint)), false);
+						return 1;
+					})
 					.then(argument("value", BoolArgumentType.bool())
 						.executes(context -> {
 							ServerConfig.itemsAlwaysRemoveGlint = BoolArgumentType.getBool(context, "value");
 							ServerConfig.save();
-							context.getSource().sendSuccess(() -> Component.literal("Model Browser: item glint is "
-								+ (ServerConfig.itemsAlwaysRemoveGlint ? "now" : "no longer") + " removed by default."), true);
+							context.getSource().sendSuccess(() -> Component.translatable(
+								"commands.modelbrowser.gamerule.set", "items_always_remove_glint", Boolean.toString(ServerConfig.itemsAlwaysRemoveGlint)), true);
 							return 1;
-						})))
-				.then(argument("value", BoolArgumentType.bool())
-					.executes(context -> {
-						ServerConfig.itemsAlwaysEquippable = BoolArgumentType.getBool(context, "value");
-						ServerConfig.save();
-						context.getSource().sendSuccess(() -> Component.literal("Model Browser: items are "
-							+ (ServerConfig.itemsAlwaysEquippable ? "now" : "no longer") + " always equippable."), true);
-						return 1;
-					})));
+						}))));
 		});
 	}
 }

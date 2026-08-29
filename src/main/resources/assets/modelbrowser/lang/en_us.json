@@ -1,4 +1,6 @@
 {
+  "commands.modelbrowser.gamerule.query": "Model Browser setting %s is currently set to: %s",
+  "commands.modelbrowser.gamerule.set": "Model Browser setting %s is now set to: %s",
   "modelbrowser.open_menu": "Open Model Browser",
   "modelbrowser.no_models_loaded": "No models loaded!",
   "text.autoconfig.modelbrowser.title": "Model Browser Options",
