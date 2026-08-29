@@ -37,10 +37,11 @@ public abstract class AnvilScreenHandlerMixin {
     @Unique private Component savedCustomName = null;
     @Unique private boolean flagEquippable = false;
     @Unique private boolean flagRemoveGlint = false;
+    @Unique private boolean flagForceGlint = false;
 
     // "namespace:path" optionally followed by whitespace and flag letters, e.g. "modid:foo/bar -ge"
     private static final Pattern MODEL_ID_PATTERN =
-        Pattern.compile("^([a-z0-9_.-]+:[a-z0-9_/.-]+)(?:\\s+-([a-z]+))?$");
+        Pattern.compile("^([a-z0-9_.-]+:[a-z0-9_/.-]+)(?:\\s+-([a-zA-Z]+))?$");
 
     @Inject(method = "validateName", at = @At("HEAD"), cancellable = true)
     private static void modelbrowser$validateName(String name, CallbackInfoReturnable<String> cir) {
@@ -75,6 +76,7 @@ public abstract class AnvilScreenHandlerMixin {
         this.savedCustomName = null;
         this.flagEquippable = false;
         this.flagRemoveGlint = false;
+        this.flagForceGlint = false;
 
         if (validated != null) {
             Matcher matcher = MODEL_ID_PATTERN.matcher(validated);
@@ -89,6 +91,7 @@ public abstract class AnvilScreenHandlerMixin {
                             char c = flagsPart.charAt(i);
                             if (c == 'e') this.flagEquippable = true;
                             if (c == 'g') this.flagRemoveGlint = true;
+                            if (c == 'G') this.flagForceGlint = true;
                         }
                     }
                     Slot inputSlot = ((AnvilMenu)(Object)this).getSlot(0);
@@ -135,18 +138,19 @@ public abstract class AnvilScreenHandlerMixin {
             out.remove(DataComponents.CUSTOM_NAME);
         }
 
-        // make equippable if enabled by config or requested with -e
         if (ServerConfig.itemsAlwaysEquippable || this.flagEquippable) {
             Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
             out.set(DataComponents.EQUIPPABLE, equippable);
         }
 
-        // remove glint if enabled by config or requested with -g
         if (ServerConfig.itemsAlwaysRemoveGlint || this.flagRemoveGlint) {
             out.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
         }
+        if (this.flagForceGlint) {
+            out.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        }
 
-        // custom data
+        // set custom data
         CompoundTag compound = new CompoundTag();
         compound.putBoolean("model_browser_data", true);
         CustomData customData = CustomData.of(compound);
