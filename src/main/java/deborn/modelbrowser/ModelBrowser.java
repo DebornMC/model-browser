@@ -54,6 +54,20 @@ public class ModelBrowser implements ModInitializer {
 							context.getSource().sendSuccess(() -> Component.translatable(
 								"commands.modelbrowser.gamerule.set", "items_always_remove_glint", Boolean.toString(ServerConfig.itemsAlwaysRemoveGlint)), true);
 							return 1;
+						})))
+				.then(literal("minecraft_namespace_allowed")
+					.executes(context -> {
+						context.getSource().sendSuccess(() -> Component.translatable(
+							"commands.modelbrowser.gamerule.query", "minecraft_namespace_allowed", Boolean.toString(ServerConfig.minecraftNamespaceAllowed)), false);
+						return 1;
+					})
+					.then(argument("value", BoolArgumentType.bool())
+						.executes(context -> {
+							ServerConfig.minecraftNamespaceAllowed = BoolArgumentType.getBool(context, "value");
+							ServerConfig.save();
+							context.getSource().sendSuccess(() -> Component.translatable(
+								"commands.modelbrowser.gamerule.set", "minecraft_namespace_allowed", Boolean.toString(ServerConfig.minecraftNamespaceAllowed)), true);
+							return 1;
 						}))));
 		});
 	}

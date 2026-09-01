@@ -59,9 +59,15 @@ public abstract class AnvilScreenHandlerMixin {
             return;
         }
 
-        if (filteredName.length() <= 1000 && MODEL_ID_PATTERN.matcher(filteredName).matches()) {
-            cir.setReturnValue(filteredName);
-            return;
+        if (filteredName.length() <= 1000) {
+            Matcher matcher = MODEL_ID_PATTERN.matcher(filteredName);
+            if (matcher.matches()) {
+                Identifier id = Identifier.tryParse(matcher.group(1));
+                if (id != null && ServerConfig.isNamespaceAllowed(id.getNamespace())) {
+                    cir.setReturnValue(filteredName);
+                    return;
+                }
+            }
         }
 
         cir.setReturnValue(null);
@@ -89,7 +95,7 @@ public abstract class AnvilScreenHandlerMixin {
                 String idPart = matcher.group(1);
                 String flagsPart = matcher.group(2);
                 Identifier id = Identifier.tryParse(idPart);
-                if (id != null) {
+                if (id != null && ServerConfig.isNamespaceAllowed(id.getNamespace())) {
                     this.pendingModelId = id;
                     if (flagsPart != null) {
                         for (int i = 0; i < flagsPart.length(); i++) {

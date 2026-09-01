@@ -17,6 +17,7 @@ public final class ServerConfig {
 
     public static boolean itemsAlwaysEquippable = true;
     public static boolean itemsAlwaysRemoveGlint = true;
+    public static boolean minecraftNamespaceAllowed = false;
 
     private ServerConfig() {
     }
@@ -31,6 +32,7 @@ public final class ServerConfig {
             JsonObject json = JsonParser.parseString(Files.readString(FILE)).getAsJsonObject();
             itemsAlwaysEquippable = getBoolean(json, "items_always_equippable", true);
             itemsAlwaysRemoveGlint = getBoolean(json, "items_always_remove_glint", true);
+            minecraftNamespaceAllowed = getBoolean(json, "minecraft_namespace_allowed", false);
         } catch (Exception exception) {
             System.err.println("Failed to load Model Browser server config: " + exception.getMessage());
         }
@@ -40,6 +42,7 @@ public final class ServerConfig {
         JsonObject json = new JsonObject();
         json.addProperty("items_always_equippable", itemsAlwaysEquippable);
         json.addProperty("items_always_remove_glint", itemsAlwaysRemoveGlint);
+        json.addProperty("minecraft_namespace_allowed", minecraftNamespaceAllowed);
 
         try {
             Files.createDirectories(FILE.getParent());
@@ -47,6 +50,10 @@ public final class ServerConfig {
         } catch (IOException exception) {
             System.err.println("Failed to save Model Browser server config: " + exception.getMessage());
         }
+    }
+
+    public static boolean isNamespaceAllowed(String namespace) {
+        return !"minecraft".equals(namespace) || minecraftNamespaceAllowed;
     }
 
     private static boolean getBoolean(JsonObject json, String key, boolean defaultValue) {
