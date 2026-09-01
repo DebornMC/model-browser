@@ -18,12 +18,15 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.equipment.EquipmentAsset;
+import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.item.equipment.Equippable;
 import deborn.modelbrowser.config.ServerConfig;
 
@@ -38,6 +41,7 @@ public abstract class AnvilScreenHandlerMixin {
     @Unique private boolean flagEquippable = false;
     @Unique private boolean flagRemoveGlint = false;
     @Unique private boolean flagForceGlint = false;
+    @Unique private boolean flagEquipmentModel = false;
 
     // "namespace:path" optionally followed by whitespace and flag letters, e.g. "modid:foo/bar -ge"
     private static final Pattern MODEL_ID_PATTERN =
@@ -77,6 +81,7 @@ public abstract class AnvilScreenHandlerMixin {
         this.flagEquippable = false;
         this.flagRemoveGlint = false;
         this.flagForceGlint = false;
+        this.flagEquipmentModel = false;
 
         if (validated != null) {
             Matcher matcher = MODEL_ID_PATTERN.matcher(validated);
@@ -92,6 +97,7 @@ public abstract class AnvilScreenHandlerMixin {
                             if (c == 'e') this.flagEquippable = true;
                             if (c == 'g') this.flagRemoveGlint = true;
                             if (c == 'G') this.flagForceGlint = true;
+                            if (c == 'a') this.flagEquipmentModel = true;
                         }
                     }
                     Slot inputSlot = ((AnvilMenu)(Object)this).getSlot(0);
@@ -118,6 +124,35 @@ public abstract class AnvilScreenHandlerMixin {
         return name;
     }
 
+    @Unique
+    private static Equippable.Builder modelbrowser$copyEquippable(
+        Equippable original,
+        EquipmentSlot slot,
+        ResourceKey<EquipmentAsset> assetId,
+        Identifier cameraOverlay
+    ) {
+        Equippable.Builder builder = Equippable.builder(slot);
+        if (original != null) {
+            builder.setEquipSound(original.equipSound());
+            original.assetId().ifPresent(builder::setAsset);
+            original.cameraOverlay().ifPresent(builder::setCameraOverlay);
+            original.allowedEntities().ifPresent(builder::setAllowedEntities);
+            builder.setDispensable(original.dispensable());
+            builder.setSwappable(original.swappable());
+            builder.setDamageOnHurt(original.damageOnHurt());
+            builder.setEquipOnInteract(original.equipOnInteract());
+            builder.setCanBeSheared(original.canBeSheared());
+            builder.setShearingSound(original.shearingSound());
+        }
+        if (assetId != null) {
+            builder.setAsset(assetId);
+        }
+        if (cameraOverlay != null) {
+            builder.setCameraOverlay(cameraOverlay);
+        }
+        return builder;
+    }
+
     @Inject(method = "createResult", at = @At("TAIL"))
     private void afterUpdateResult(CallbackInfo ci) {
         AnvilMenu self = (AnvilMenu)(Object)this;
@@ -134,8 +169,22 @@ public abstract class AnvilScreenHandlerMixin {
             case CHEST, LEGS, FEET -> true;
             default -> false;
         };
-        out.set(DataComponents.ITEM_MODEL, id);
+        if (!this.flagEquipmentModel) {
+            out.set(DataComponents.ITEM_MODEL, id);
+        }
+        else {
+            Identifier modelId = id;
+            ResourceKey<EquipmentAsset> assetId = ResourceKey.create(EquipmentAssets.ROOT_ID, modelId);
 
+            Equippable equippable = modelbrowser$copyEquippable(
+                    inputEquippable,
+                    inputEquippable != null ? inputEquippable.slot() : EquipmentSlot.HEAD,
+                    assetId,
+                    null
+                ).build();
+
+            out.set(DataComponents.EQUIPPABLE, equippable);
+        }
         // Restore previous custom_name if there was one, otherwise remove it
         if (this.savedCustomName != null) {
             out.set(DataComponents.CUSTOM_NAME, this.savedCustomName);
@@ -145,8 +194,8 @@ public abstract class AnvilScreenHandlerMixin {
 
         // if the input is already equippable on head (eg helmets) then always explicitly add the equippable component, otherwise the model will show as a helmet
         // if the input is already equippable on a different slot, ignore the always equippable flag/config option
-        if ((inputIsHeadEquippable || ServerConfig.itemsAlwaysEquippable || this.flagEquippable) && !inputIsArmorEquippable) {
-            Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
+        if ((inputIsHeadEquippable || ServerConfig.itemsAlwaysEquippable || this.flagEquippable) && !inputIsArmorEquippable && !flagEquipmentModel) {
+            Equippable equippable = modelbrowser$copyEquippable(inputEquippable, EquipmentSlot.HEAD, null, null).build();
             out.set(DataComponents.EQUIPPABLE, equippable);
         }
         if (ServerConfig.itemsAlwaysRemoveGlint || this.flagRemoveGlint) {
