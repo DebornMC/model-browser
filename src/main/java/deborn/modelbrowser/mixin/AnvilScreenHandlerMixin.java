@@ -200,7 +200,11 @@ public abstract class AnvilScreenHandlerMixin {
 
         // if the input is already equippable on head (eg helmets) then always explicitly add the equippable component, otherwise the model will show as a helmet
         // if the input is already equippable on a different slot, ignore the always equippable flag/config option
-        if ((inputIsHeadEquippable || ServerConfig.itemsAlwaysEquippable || this.flagEquippable) && !inputIsArmorEquippable && !flagEquipmentModel) {
+        if (inputIsHeadEquippable && !flagEquipmentModel) {
+            Equippable equippable = Equippable.builder(EquipmentSlot.HEAD).build();
+            out.set(DataComponents.EQUIPPABLE, equippable);
+        }
+        else if ((ServerConfig.itemsAlwaysEquippable || this.flagEquippable) && !inputIsArmorEquippable && !flagEquipmentModel) {
             Equippable equippable = modelbrowser$copyEquippable(inputEquippable, EquipmentSlot.HEAD, null, null).build();
             out.set(DataComponents.EQUIPPABLE, equippable);
         }
