@@ -17,7 +17,7 @@ public final class ServerConfig {
 
     public static boolean itemsAlwaysEquippable = true;
     public static boolean itemsAlwaysRemoveGlint = true;
-    public static boolean minecraftNamespaceAllowed = false;
+    public static boolean minecraftNamespaceAllowed = true;
 
     private ServerConfig() {
     }
@@ -32,7 +32,7 @@ public final class ServerConfig {
             JsonObject json = JsonParser.parseString(Files.readString(FILE)).getAsJsonObject();
             itemsAlwaysEquippable = getBoolean(json, "items_always_equippable", true);
             itemsAlwaysRemoveGlint = getBoolean(json, "items_always_remove_glint", true);
-            minecraftNamespaceAllowed = getBoolean(json, "minecraft_namespace_allowed", false);
+            minecraftNamespaceAllowed = getBoolean(json, "minecraft_namespace_allowed", true);
         } catch (Exception exception) {
             System.err.println("Failed to load Model Browser server config: " + exception.getMessage());
         }
